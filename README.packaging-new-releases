@@ -1,0 +1,33 @@
+Steps that we take when doing releases (so we don't forget)
+
+===Tarball===
+All instructions assume a current working directory of trunk
+1) Be sure changelog is up to date. Check the commit messages for important bug fixes, enhancements, features, etc.
+2) Increment version number in changelog and README.new-usage (change "svn HEAD" to "version x.x.x")
+3) Be sure man pages are up to date.
+4) Update VERSION variable in src/google
+5) Update version keyword argument in setup.py
+6) cp src/google.py src/google ; chmod 755 src/google
+7) Regenerate man page per instructions in src/google
+8) Commit all these changes with a message like "Change to x.x.x" or "Committing updated version numbers x.x.x"
+9) Use setup.py sdist to make the source distribution
+10) cd dist ; tar xf googlecl-x.x.x.tar.gz ; cd googlecl-x.x.x/
+11) chmod 755 src/google (sdist apparently sets whatever permissions it feels like)
+12) When you're convinced it's correct, use svn copy to tag the release:
+ $ svn copy https://googlecl.googlecode.com/svn/trunk https://googlecl.googlecode.com/svn/tags/release-x.x.x -m "x.x.x release"
+13) Update release at pypi: http://pypi.python.org/pypi/googlecl/
+
+===Debian package===
+Our .deb build currently uses git-buildpackage with a private git repo (sorry, hackers).
+
+===Windows executable===
+Note: This will only work from a windows machine with py2exe installed. You MUST use Python 2.5
+1) Run 'cmd' to get a terminal
+2) cd to the src directory of the repository, where win_setup is.
+3) Copy google.py to google.
+4) Run "C:\path\to\python25\python.exe win_setup.py py2exe -O2" That's a capital "o", then a 2
+5) LEGAL WORRY: After py2exe does its thing, ***REMOVE MSVCR71.dll*** from the newly created dist/
+6) Copy trunk/README.txt and trunk/README.config into dist/
+7) Rename dist/ to googlecl (or what have you) and zip it up.
+
+On legal worries: As far as I can tell, it is a breach of the EULA to distribute that DLL unless you own a license for Microsoft Visual C++, which I do not. Users that need it can follow the instructions on the wiki's SystemRequirements page

@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/573/trunk/src/googlecl/discovery
+END
+authentication.py
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/573/trunk/src/googlecl/discovery/authentication.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/552/trunk/src/googlecl/discovery/__init__.py
+END
+output.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/552/trunk/src/googlecl/discovery/output.py
+END
+docs.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/552/trunk/src/googlecl/discovery/docs.py
+END
+data.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/552/trunk/src/googlecl/discovery/data.py
+END

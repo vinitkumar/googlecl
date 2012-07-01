@@ -1,0 +1,17 @@
+#!/bin/bash
+# Swap the gdata library
+echo PYTHONPATH is $PYTHONPATH
+LIB=~/lib
+LIB_PATH=`cd ~/lib; pwd`
+GDATA_OLD="python-old"
+GDATA_NEW="python"
+GDATA_OLD_PATH=$LIB_PATH/$GDATA_OLD
+GDATA_NEW_PATH=$LIB_PATH/$GDATA_NEW
+
+if [[ "$PYTHONPATH" =~ "$GDATA_OLD_PATH" ]]
+then
+  export PYTHONPATH=${PYTHONPATH/$GDATA_OLD_PATH/$GDATA_NEW_PATH}
+else
+  export PYTHONPATH=${PYTHONPATH/$GDATA_NEW_PATH/$GDATA_OLD_PATH}
+fi
+echo Changed PYTHONPATH to $PYTHONPATH

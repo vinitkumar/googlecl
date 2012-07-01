@@ -1,0 +1,129 @@
+version 0.9.13
+ Bugfixes
+ * default_encoding config option allows user to specify a default encoding other than ASCII (was a bug for some uses, namely cron jobs).
+ * Appropriate intermediate directories are created during authentication token storage.
+ * Catch previously uncaught exception when webbrowser does not find a default or specified browser.
+ * Deletion of recurring calendar events does not cause AttributeError.
+ * Deletion of recurring calendar events with --yes flag only deletes all events if --date is not specified.
+ * File extensions for Picasa are case insensitive.
+
+version 0.9.12
+ Enhancements
+ * Added support for Google Finance (thanks, bartosh!)
+ * Improved flexibility of --date option.
+ * Allow specification of date for added calendar events.
+ * Added --access option for Picasa, Blogger, and YouTube creation tasks.
+ * Improved and expanded list fields for youtube, picasa, and blogger.
+ * Added --photo option to specify names of photos in Picasa to operate on.
+ * Added --yes option to automatically delete files, instead of asking for confirmation.
+ * impatient_editors config file option can stop programs like openoffice.org from exiting immediately during docs edit command.
+ * Take input from stdin (allow piping to GoogleCL).
+
+ Bugfixes
+ * --editor option for Docs can take flags and options.
+ * max_retries and retry_delay configuration options help combat some server errors.
+ * Enable downloading drawings.
+ * Don't save user account to config file as a default if authentication failed.
+
+version 0.9.11
+ Enhancements
+ * Added --src and --dest options to allow specifying data sources and download destinations respectively.
+ * Enabled fully positional command line arguments (e.g. "google docs get my_doc .")
+ * Add command line arguments to --title option to form list of titles to delete/list/download
+ * Added list fields for picasa list (see README.new-usage). Thanks ferranb!
+
+ Bugfixes
+ * (more certainly) enabled unicode support
+ * Create missing intermediate folders when saving config file and/or data files.
+ * Uploads to Docs correctly parse filenames with multiple '.' characters.
+ * Verbosity of output settable in interactive mode.
+
+version 0.9.10
+ Enhancements
+ * Follow XDG Base Directory Specification.
+ * Refactored to include library support of v2 and v3 of the gdata protocol.
+ * Allowed --no-convert option to upload arbitrary file types to Docs for Apps Premier users (?)
+ * Enabled downloads of arbitrary file types from Docs.
+ * Added many more list fields (e.g. birthday, company, relation) for Contacts service.
+
+ Bugfixes
+ * youtube list works without --owner flag again.
+ * Picasa uploads are case-insensitive for file extensions.
+ * (Probably) enabled unicode support.
+
+version 0.9.9
+ Enhancements
+ * Enabled video upload and download for Picasa.
+ * Added reminders for Calendar via --reminder option.
+ * Added --owner option to specify other accounts to interact with (e.g. Picasa collaborative albums, listing videos from other YouTube accounts).
+ * Added list styles for contacts.
+ * Allow docs edit task to create folders.
+ * Included workaround for downloading new-version documents.
+ * Added debug, verbose, and quiet flag options.
+ * Added configuration file option decode_utf_8 to automatically decode downloaded Google Docs.
+
+ Bugfixes
+ * YouTube tasks can retrieve more than 50 results from queries.
+ * Googlemail domains can authenticate properly.
+
+version 0.9.8
+ Enhancements
+ * Authorization for Apps users occurs properly.
+ * Docs upload can upload directories (Thanks, bartosh!)
+ * setuptools support added for setup.py. (Thanks, dcolish!)
+ * Calendar service supports multiple calendar operations.
+ * More results are returned by queries, and control over number of results given to user with config file options.
+ * Added --format as optional option to docs upload and download.
+ * Added --folder as optional option to docs edit.
+ * Behavior of --date option for calendar service improved.
+ * Docs service can now download / edit spreadsheets. (Thanks, bartosh!)
+ * Exceptions raised in interactive shell do not end shell session (Thanks, ferranb!)
+
+ Bugfixes
+ * Catches when user grants access with an account other than the one specified.
+ * Uploads to folders in docs supported.
+ * Gdata dependency added to setup.py.
+ * Asking for help on a non-existant service cleanly and helpfully exits. (Thanks, ferranb!)
+ * Errors encountered while uploading to Picasa are printed correctly rather than crashing. (Thanks, bartosh!)
+ * Uploading files to Docs without extensions obeys --format or assumes an extension.
+ * Uploading multiple files to Docs will name each file after its filename, rather than the first filename encountered.
+ * Dependency on gdata is versioned to >= 1.2.4
+
+version 0.9.7
+ Enhancements:
+ * Command history added to interactive mode (Thanks, aripollak!)
+ * Make "--date 2010-06-19" specify a single day instead of a range starting on that date.
+ * Add *-groups tasks to contacts service, start to move away from --title.
+   (thanks, ericvw!)
+
+ Bugfixes:
+ * Browser launch for authentication more reliable.
+
+version 0.9.5
+ Bugfixes:
+ * YouTube list task does not raise RequestError complaining about max-results.
+
+version 0.9.4
+ Enhancements:
+ * Docs "edit" task will create a document if user specifies a non-existent document.
+ * Added --draft flag so that Blogger "post" task can post drafts.
+ * Blogger tasks no longer force user to fill out --blog option.
+
+ Bugfixes:
+ * Getting events no longer omits or includes events in or out of the given date range, respectively.
+ * DeprecationWarning no longer appears during docs upload for users with more recent python gdata libraries.
+
+version 0.9.2
+ Enhancements:
+ * Fixes to Debian packaging.
+
+version 0.9.1
+ Enhancements:
+ * Posting photos to an ambiguous album title prompts user to select album, rather than failing.
+
+ Bugfixes:
+ * Tasks with no required options do not raise TypeError exceptions.
+ * Uploading photos does not raise TypeError exceptions.
+
+version 0.9
+ * Initial release.

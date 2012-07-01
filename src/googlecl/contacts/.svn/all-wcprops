@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/535/trunk/src/googlecl/contacts
+END
+client.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/527/trunk/src/googlecl/contacts/client.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/527/trunk/src/googlecl/contacts/__init__.py
+END
+service.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/527/trunk/src/googlecl/contacts/service.py
+END
+base.py
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/535/trunk/src/googlecl/contacts/base.py
+END

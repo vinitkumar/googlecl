@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 27
+/svn/!svn/ver/589/trunk/src
+END
+test.sh
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/!svn/ver/573/trunk/src/test.sh
+END
+debug_util.py
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/442/trunk/src/debug_util.py
+END
+setpath.sh
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/507/trunk/src/setpath.sh
+END
+gdata-swap.sh
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/517/trunk/src/gdata-swap.sh
+END
+google.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/589/trunk/src/google.py
+END
+win_setup.py
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/454/trunk/src/win_setup.py
+END

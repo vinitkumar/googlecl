@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/589/trunk/src/googlecl
+END
+base.py
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/587/trunk/src/googlecl/base.py
+END
+client.py
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/520/trunk/src/googlecl/client.py
+END
+authentication.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/540/trunk/src/googlecl/authentication.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/542/trunk/src/googlecl/__init__.py
+END
+service.py
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/567/trunk/src/googlecl/service.py
+END

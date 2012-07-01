@@ -1,0 +1,11 @@
+#!/bin/bash
+SCRIPT_DIR=`dirname $0`
+GOOGLECL_DIR=`cd $SCRIPT_DIR; pwd`
+
+if [[ "$PYTHONPATH" =~ "$GOOGLECL_DIR" ]]
+then
+  export PYTHONPATH=${PYTHONPATH/:$GOOGLECL_DIR}
+else
+  export PYTHONPATH=$PYTHONPATH:$GOOGLECL_DIR
+fi
+echo Changed PYTHONPATH to $PYTHONPATH
