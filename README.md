@@ -1,8 +1,10 @@
-README
-------
+Google CL
+=========
+ 
+This is my fork of googlecl project. It is hosted on GoogleCode. It is forked on Github for learning and development purpose. 
 
-This project is originally made by googlecl team, Here is the link of original contributor who had originally conceived the project and maintained it for quite a long time.[Contributors](http://code.google.com/p/googlecl/people/list) Since there is not much contribution over there as of now. I am trying to maintain this project in GitHub ecosystem.
 
-So please feel free to fork and contribute.
+If you want to contribute, read the contributing guidelines, Fork and contribute. All the contribution will done with Pull Requests.
 
-You can contact me here. [Vinit](http://twitter.com/vinitcool76)
+
+ 
