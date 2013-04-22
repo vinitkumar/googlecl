@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/vinitcool76/googlecl.png?branch=master)](https://travis-ci.org/vinitcool76/googlecl)
+
 Google CL
 =========
  
