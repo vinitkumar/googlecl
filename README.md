@@ -1,12 +1,12 @@
 [![Build Status](https://travis-ci.org/vinitcool76/googlecl.png?branch=master)](https://travis-ci.org/vinitcool76/googlecl)
+##Google CL
 
-Google CL
-=========
- 
-This is my fork of googlecl project. It is hosted on GoogleCode. It is forked on Github for learning and development purpose. 
+Google CL is a project originally made by Google Engineers and it gives access to Google services in command line. It has been abandoned for over an year so forked it to Github to keep it alive. 
 
 
-If you want to contribute, read the contributing guidelines, Fork and contribute. All the contribution will done with Pull Requests.
+In order to contribute read the issues and solve existing bugs or send PR with the bugfix/features/enhancement. 
+
+Please read the styleguide and contribute accordingly.
 
 
- Keep contributing! 
+
