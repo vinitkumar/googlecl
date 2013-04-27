@@ -6,7 +6,10 @@ python:
    - "3.3"
 
 #command to install dependencies
-install: "pip install -r requirement.txt --use-mirrors"
 
-#command to run tests
-script: nosetests
+#command to run tests 
+install:
+  - python setup.py install 
+notifications: 
+  email: true
+  

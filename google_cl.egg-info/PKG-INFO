@@ -1,0 +1,19 @@
+Metadata-Version: 1.1
+Name: google-cl
+Version: 0.9.14
+Summary: Use (some) Google services from the command line
+Home-page: http://github.com/vinitcool76/googlecl
+Author: Vinit Kumar
+Author-email: vinitcool76@gmail.com
+License: Apache Software License
+Description: The Google Data APIs allow programmatic access to
+        various Google services.  This package wraps a subset of those APIs into a
+        command-line tool that makes it easy to do things like posting to a Blogger
+        blog, uploading files to Picasa, or editing a Google Docs file.
+Platform: UNKNOWN
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Environment :: Console
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: POSIX
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
