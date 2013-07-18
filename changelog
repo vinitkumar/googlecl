@@ -1,3 +1,30 @@
+
+0.9.14 / 2013-07-18 
+==================
+
+  * cleanup of man files from the roor
+  * moved man to docs directory
+  * moving readmefiles to docs directory
+  * cleaning files
+  * Update README.md
+  * Update README.md
+  * adding travis image
+  * more fixes
+  * Merge pull request #6 from vinitcool76/develop
+  * Merge pull request #5 from vinitcool76/feature/googledrive
+  * fixing travis
+  * trying to fix travis
+  * added travis install
+  * added new setup
+  * updated readme
+  * Update README.md
+  * added travis
+  * added travis
+  * updated readme
+  * contributors
+  * REAMDE
+  * googlecl first commit
+  * first commit
 version 0.9.13
  Bugfixes
  * default_encoding config option allows user to specify a default encoding other than ASCII (was a bug for some uses, namely cron jobs).
