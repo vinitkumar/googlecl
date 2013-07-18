@@ -2,12 +2,14 @@
 
 [![Build Status](https://travis-ci.org/vinitcool76/googlecl.png?branch=master)](https://travis-ci.org/vinitcool76/googlecl)
 
-Google CL is a project originally made by Google Engineers and it gives access to Google services in command line. It has been abandoned for over an year so forked it to Github to keep it alive. 
+GoogleCL is the google on command line. It was a project by Google Engineer Tom. H. Miller.  
 
+Currently i am maintain this project on Github. 
+For contribution, read : http://github.com/vinitcool76/googlecl/wiki
 
-In order to contribute read the issues and solve existing bugs or send PR with the bugfix/features/enhancement. 
+I use github-flow workflow in all my projects, i suggest you do the same. Create issues and send PR with bugfixes/features.
 
-Please read the styleguide and contribute accordingly.
+Also, if anyone want to share the load of maintaining this package, send in a good PR, I will make you a collaborator on this repo.
 
 
 
