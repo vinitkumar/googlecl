@@ -1,3 +1,2 @@
 include src/google README.txt README.config INSTALL.txt changelog README.new-usage
 recursive-include googlecl *.py
-recursive-include man google.[0-9]
