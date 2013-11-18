@@ -1,6 +1,6 @@
 ##Google CL
 
-[![Build Status](https://travis-ci.org/vinitcool76/googlecl.png?branch=master)](https://travis-ci.org/vinitcool76/googlecl)
+[![Downloads](https://pypip.in/d/google_cl/badge.png)](https://crate.io/package/google_cl)
 
 GoogleCL is the google on command line. It was a project by Google Engineer Tom.
 H. Miller.  Currently, i maintain this project on Github. 
