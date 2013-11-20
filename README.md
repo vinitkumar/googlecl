@@ -2,15 +2,33 @@
 
 [![Downloads](https://pypip.in/d/google_cl/badge.png)](https://crate.io/package/google_cl)
 
-GoogleCL is the google on command line. It was a project by Google Engineer Tom.
-H. Miller.  Currently, i maintain this project on Github. 
+GoogleCl on github is a fork of [googlecl](https://code.google.com/p/googlecl/) that was written by Mr. Tom H. Miller 
+of Google. Currently the project is mainly in inactive stage in terms of development. I will try to add new features 
+and fix some existing bugs in this period.
 
-- For contribution, read : `http://github.com/vinitcool76/googlecl/wiki`
-I use github-flow workflow in all my projects, i suggest you do the same.
-Create issues and send PR with bugfixes/features.
 
-Also, if anyone want to share the load of maintaining this package, send
-in a good PR, I will make you a collaborator on this repo.
+### HOW TO INSTALL
 
+
+Short instructions:
+From the command line, in the directory as this file, run
+
+```bash
+$ sudo python setup.py install
+```
+
+or
+
+```bash
+$ python setup.py install --home=~
+```
+
+(remember to set your PYTHONPATH to include your home directory if you do it this way)
+
+### Contribution:
+
+- Create new issues if you find something that is not working.
+- Original styleguide of the project will be followed throughout. It is kind of a big projects so pay sometime to get hang of it.
+- Suggestions and contributions are always welcome.
 
 
