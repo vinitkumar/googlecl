@@ -32,3 +32,7 @@ $ python setup.py install --home=~
 - Suggestions and contributions are always welcome.
 
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/vinitkumar/googlecl/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
