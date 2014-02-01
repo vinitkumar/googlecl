@@ -1,9 +1,9 @@
 ## DEPENDENCIES
 
-GoogleCL requires Python 2.5 or 2.6 and the gdata python client library.
+GoogleCL requires Python 2.6 and above and the gdata python client library.
 
 You can get the library from the project homepage:
-    [project homepage](http://code.google.com/p/gdata-python-client/)
+ - [project homepage](http://code.google.com/p/gdata-python-client/)
 
 The installation directions for the client library should also contain
 directions on installing Python, if you don't have it already.
@@ -16,8 +16,8 @@ From the command line, in the directory as this file, run
 ```bash
 $ sudo python setup.py install
 ```
+Or you could do it this way:
 
-or
 
 ```bash
 $ python setup.py install --home=~
