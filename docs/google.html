@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>google.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>google.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Main function for the Google command line tool, GoogleCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>This program provides some functionality for a number of Google services from
+the command line.</p>
+<p>Example usage (omitting the initial "./google"):
+  # Create a photo album with tags "Vermont" and name "Summer Vacation 2009"
+  picasa create -n "Summer Vacation 2009" -t Vermont ~/photos/vacation2009/*</p>
+<p># Post photos to an existing album
+  picasa post -n "Summer Vacation 2008" ~/old_photos/*.jpg</p>
+<p># Download another user's albums whose titles match a regular expression
+  picasa get --user my.friend.joe --name ".<em>computer.</em>" ~/photos/joes_computer</p>
+<p># Delete some posts you accidentally put up
+  blogger delete -n "Silly post, number [0-9]*"</p>
+<p># Post your latest film endeavor to YouTube
+  youtube post --category Film --tag "Jane Austen, zombies" ~/final_project.mp4</p>
+<p>Some terminology in use:
+  service: The Google service being accessed (e.g. Picasa, Blogger, YouTube).
+  task: What the client wants done by the service (e.g. post, get, delete).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;tom.h.miller@gmail.com (Tom Miller)&#39;</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">optparse</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">webbrowser</span>
+<span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">import</span> <span class="nn">googlecl.authentication</span>
+<span class="kn">import</span> <span class="nn">googlecl.config</span>
+<span class="k">try</span><span class="p">:</span> <span class="c"># Fails if Discovery stuff is unavailable</span>
+ <span class="kn">from</span> <span class="nn">googlecl.discovery</span> <span class="kn">import</span> <span class="n">DiscoveryManager</span>
+ <span class="n">apis</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span><span class="p">:</span>
+ <span class="n">apis</span> <span class="o">=</span> <span class="bp">False</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Renamed here to reduce verbosity in other sections</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">safe_encode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_encode</span>
+<span class="n">safe_decode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_decode</span>
+
+<span class="n">VERSION</span> <span class="o">=</span> <span class="s">&#39;0.9.13&#39;</span>
+
+<span class="n">AVAILABLE_SERVICES</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;help&#39;</span><span class="p">,</span> <span class="s">&#39;picasa&#39;</span><span class="p">,</span> <span class="s">&#39;blogger&#39;</span><span class="p">,</span> <span class="s">&#39;youtube&#39;</span><span class="p">,</span> <span class="s">&#39;docs&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;contacts&#39;</span><span class="p">,</span> <span class="s">&#39;calendar&#39;</span><span class="p">,</span> <span class="s">&#39;finance&#39;</span><span class="p">]</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span>
+
+<span class="n">discovery</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">AVAILABLE_APIS</span> <span class="o">=</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">NonFatalOptionParser</span><span class="p">(</span><span class="n">optparse</span><span class="o">.</span><span class="n">OptionParser</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="n">message</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">bailout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;FATAL ERROR:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">bailout_if_necessary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;error_message&#39;</span><span class="p">):</span>
+      <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="s">&quot;FATAL ERROR:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+      <span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Attempts to sanely parse the command line, considering both the legacy gdata
+services and the new discovery services which aren't known at runtime.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">parse_command_line</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">original_args</span><span class="p">):</span>
+  <span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">original_args</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>If the discovery API is available and we're using it, then it needs to do
+its own argument parsing.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>If there's no discovery API, then any argument errors are fatal.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">apis</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span><span class="p">:</span>
+      <span class="n">parser</span><span class="o">.</span><span class="n">bailout</span><span class="p">(</span><span class="s">&quot;Discovery API unavailable.  Services limited to:&quot;</span> <span class="o">+</span>
+                     <span class="s">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">AVAILABLE_SERVICES</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Unknown service: &quot;</span> <span class="o">+</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">bailout_if_necessary</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Even if there is a discovery API, if you asked for a non-discovery service,
+argument errors are fatal.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span><span class="p">:</span>
+      <span class="n">parser</span><span class="o">.</span><span class="n">bailout_if_necessary</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">args</span> <span class="o">=</span> <span class="n">original_args</span>
+
+  <span class="k">return</span> <span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Base error for this module.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">Error</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Set a (presumably valid) OAuth token for the client to use.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">authenticate</span><span class="p">(</span><span class="n">auth_manager</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">section_header</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Args:
+  auth_manager: Object handling the authentication process.
+  options: Parsed command line options.
+  config: Configuration file parser.
+  section_header: Section header to look in for the configuration file.</p>
+<p>Returns:
+  True if authenticated, False otherwise.</p>
+<p>Only try to set the access token if we're not forced to authenticate.
+XXX: logic in here is iffy. Don't bother checking access token if it's not
+set</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">force_auth</span><span class="p">:</span>
+    <span class="n">set_token</span> <span class="o">=</span> <span class="n">auth_manager</span><span class="o">.</span><span class="n">set_access_token</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">set_token</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Successfully set token&#39;</span><span class="p">)</span>
+      <span class="n">skip_auth</span> <span class="o">=</span> <span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">skip_auth</span> <span class="ow">or</span>
+                   <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;skip_auth&#39;</span><span class="p">,</span>
+                                   <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">option_type</span><span class="o">=</span><span class="nb">bool</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Failed to set token!&#39;</span><span class="p">)</span>
+      <span class="n">skip_auth</span> <span class="o">=</span> <span class="bp">False</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Forcing retrieval of new token&#39;</span><span class="p">)</span>
+    <span class="n">skip_auth</span> <span class="o">=</span> <span class="bp">False</span>
+
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">force_auth</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">skip_auth</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Checking access token...&#39;</span><span class="p">)</span>
+    <span class="n">valid_token</span> <span class="o">=</span> <span class="n">auth_manager</span><span class="o">.</span><span class="n">check_access_token</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_token</span><span class="p">:</span>
+      <span class="n">display_name</span> <span class="o">=</span> <span class="n">auth_manager</span><span class="o">.</span><span class="n">get_display_name</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">hostid</span><span class="p">)</span>
+      <span class="n">browser_str</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;auth_browser&#39;</span><span class="p">,</span>
+                                    <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">browser_str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">browser_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;disabled&#39;</span> <span class="ow">or</span> <span class="n">browser_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;none&#39;</span><span class="p">:</span>
+          <span class="n">browser</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">try</span><span class="p">:</span>
+            <span class="n">browser</span> <span class="o">=</span> <span class="n">webbrowser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">browser_str</span><span class="p">)</span>
+          <span class="k">except</span> <span class="n">webbrowser</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">u&#39;Could not get browser &quot;</span><span class="si">%s</span><span class="s">&quot;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                                 <span class="p">(</span><span class="n">browser_str</span><span class="p">,</span> <span class="n">err</span><span class="p">)))</span>
+            <span class="n">browser</span> <span class="o">=</span> <span class="bp">None</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">browser</span> <span class="o">=</span> <span class="n">webbrowser</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">webbrowser</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">u&#39;Could not get default browser: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">err</span><span class="p">))</span>
+          <span class="n">browser</span> <span class="o">=</span> <span class="bp">None</span>
+
+      <span class="n">valid_token</span> <span class="o">=</span> <span class="n">auth_manager</span><span class="o">.</span><span class="n">retrieve_access_token</span><span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">browser</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">valid_token</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Retrieved valid access token&#39;</span><span class="p">)</span>
+      <span class="n">config</span><span class="o">.</span><span class="n">set_missing_default</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;skip_auth&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not retrieve valid access token&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">False</span>
+  <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Already set an access token and we're not being forced to authenticate</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">True</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>I don't know if this and shlex.split() can replace expand_as_command_line
+because of the behavior of globbing characters that are in ""
+Expands arguments list.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">expand_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">on_linesep</span><span class="p">,</span> <span class="n">on_glob</span><span class="p">,</span> <span class="n">on_homepath</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Args:
+  on_linesep: Set True to split on occurrences of os.linesep. This is
+      reasonably safe -- line separators appear to be escaped when given to
+      Python on the command line.
+  on_glob: Set True to glob expressions. May not be safe! For example, if user
+      passes in "A*" (including the quotes) the * should NOT be expanded.
+      Recommended only if sys.platform == 'win32'
+  on_homepath: Set True to replace a leading ~/ with the user's home
+      directory. May not be safe! Same situation as on_glob, described above.</p>
+<p>Returns:
+  List of arguments that have been expanded</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">new_args</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+    <span class="n">temp_arg_list</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">on_linesep</span><span class="p">:</span>
+      <span class="n">temp_arg_list</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">on_homepath</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">temp_arg_list</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sub_arg</span> <span class="ow">in</span> <span class="n">temp_arg_list</span><span class="p">:</span>
+          <span class="n">tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">sub_arg</span><span class="p">))</span>
+        <span class="n">temp_arg_list</span> <span class="o">=</span> <span class="n">tmp</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Globbing needs to happen last, otherwise it wont be able to find
+any files.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">on_glob</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">temp_arg_list</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sub_arg</span> <span class="ow">in</span> <span class="n">temp_arg_list</span><span class="p">:</span>
+          <span class="n">tmp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">sub_arg</span><span class="p">))</span>
+        <span class="n">temp_arg_list</span> <span class="o">=</span> <span class="n">tmp</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">temp_arg_list</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">temp_arg_list</span><span class="p">:</span>
+      <span class="n">new_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">temp_arg_list</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">new_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">new_args</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Expand a string as if it was entered at the command line.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">expand_as_command_line</span><span class="p">(</span><span class="n">command_string</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Mimics the shell expansion of '~', file globbing, and quotation marks.
+For example, 'picasa post -a "My album" ~/photos/*.png' will return
+['picasa', 'post', '-a', 'My album', '$HOME/photos/myphoto1.png', etc.]
+It will not treat apostrophes specially, or handle environment variables.</p>
+<p>Keyword arguments:
+  command_string: String to be expanded.</p>
+<p>Returns:
+  A list of strings that (mostly) matches sys.argv as if command_string
+  was entered on the command line.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">command_string</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">[]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>Sub in the home path.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">home_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s">&#39;~/&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>We may get a tilde that needs expansion in the middle of the string...
+(Replace with the space to make sure we don't screw up /really/~/weird/path</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">command_string</span> <span class="o">=</span> <span class="n">command_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; ~/&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">home_path</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Or, if we're given options.src to expand, it could be the first few
+characters.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">command_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;~/&#39;</span><span class="p">):</span>
+    <span class="n">command_string</span> <span class="o">=</span> <span class="n">home_path</span> <span class="o">+</span> <span class="n">command_string</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+  <span class="n">token_list</span> <span class="o">=</span> <span class="n">command_string</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+  <span class="n">args_list</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">while</span> <span class="n">token_list</span><span class="p">:</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">token_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">start_of_quote</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span> <span class="ow">or</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;&#39;&quot;</span>
+    <span class="n">start_of_dict</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;{&#39;</span>
+    <span class="n">start_of_list</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;[&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>A test to see if the end of a quoted argument has been reached</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">end_quote</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span>
+    <span class="n">end_dict</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;}&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span>
+    <span class="n">end_list</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;]&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>Don't need to worry about nesting because of natural syntax:
+["foo", ["bar"], "baz"] -&gt; stupid to have '["bar"] ,'</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">while</span> <span class="p">(</span><span class="n">start_of_quote</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end_quote</span><span class="p">(</span><span class="n">tmp</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">start_of_dict</span> 
+      <span class="ow">and</span> <span class="ow">not</span> <span class="n">end_dict</span><span class="p">(</span><span class="n">tmp</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">start_of_list</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end_list</span><span class="p">(</span><span class="n">tmp</span><span class="p">)):</span>
+      <span class="k">if</span> <span class="n">token_list</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">+=</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">token_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_of_quote</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Encountered end of string without finding matching &quot;&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">start_of_dict</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Encountered end of string without finding matching }&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Encountered end of string without finding matching ]&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">start_of_quote</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Add the resulting arg, stripping the " off</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">args_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Grab all the tokens in a row that end with unescaped \</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">while</span> <span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token_list</span><span class="p">:</span>
+          <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">token_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Encountered end of string ending in </span><span class="se">\\</span><span class="s">&#39;</span><span class="p">)</span>
+
+      <span class="n">expanded_args</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">expanded_args</span><span class="p">:</span>
+        <span class="n">args_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">expanded_args</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">args_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">args_list</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>Fill out required options via config file and command line prompts.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">fill_out_options</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">service_header</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>If there are any required fields missing for a task, fill them in.
+This is attempted by checking the following sources, in order:
+1) The service_header section of the preferences file.
+2) The arguments list given to this function.
+3) Prompting the user.</p>
+<p>Note that 'user' and 'hostid' are special options -- they are always
+required, and they will skip step (2) when checking sources as mentioned
+above.</p>
+<p>Keyword arguments:
+  args: list Arguments that may be options.
+  service_header: str Name of the section in the config file for the
+                  active service.
+  task: Requirements of the task (see class googlecl.service.Task).
+  options: Contains attributes that have been specified already, typically
+           through options on the command line (see setup_parser()).
+  config: Configuration file parser.</p>
+<p>Returns:
+  Nothing, though options may be modified to hold the required fields.</p>
+<p>Retrieve value from config file or user prompt.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_retrieve_value</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">service_header</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">service_header</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">value</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s">&#39;Please specify &#39;</span> <span class="o">+</span> <span class="n">attr</span> <span class="o">+</span> <span class="s">&#39;: &#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">_retrieve_value</span><span class="p">(</span><span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="n">service_header</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">hostid</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">hostid</span> <span class="o">=</span> <span class="n">_retrieve_value</span><span class="p">(</span><span class="s">&#39;hostid&#39;</span><span class="p">,</span> <span class="n">service_header</span><span class="p">)</span>
+  <span class="n">missing_reqs</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">get_outstanding_requirements</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;missing_reqs: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">missing_reqs</span><span class="p">))</span>
+
+  <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">missing_reqs</span><span class="p">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">service_header</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s">&#39;Please specify &#39;</span> <span class="o">+</span> <span class="n">attr</span> <span class="o">+</span> <span class="s">&#39;: &#39;</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      <p>Expand those options that might be a filename in disguise.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">max_file_size</span> <span class="o">=</span> <span class="mi">500000</span>    <span class="c"># Value picked arbitrarily - no idea what the max</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>size in bytes of a summary is.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">summary</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">summary</span><span class="p">)):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">summary_file</span><span class="p">:</span>
+      <span class="n">options</span><span class="o">.</span><span class="n">summary</span> <span class="o">=</span> <span class="n">summary_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">max_file_size</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">devkey</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">devkey</span><span class="p">)):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">devkey</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">key_file</span><span class="p">:</span>
+      <span class="n">options</span><span class="o">.</span><span class="n">devkey</span> <span class="o">=</span> <span class="n">key_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">max_file_size</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_task_help</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">tasks</span><span class="p">):</span>
+  <span class="n">help</span> <span class="o">=</span> <span class="s">&#39;Available tasks for service &#39;</span> <span class="o">+</span> <span class="n">service</span> <span class="o">+</span> \
+         <span class="s">&#39;: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+  <span class="k">for</span> <span class="n">task_name</span> <span class="ow">in</span> <span class="n">tasks</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">help</span> <span class="o">+=</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">task_name</span> <span class="o">+</span> <span class="s">&#39;: &#39;</span> <span class="o">+</span> <span class="n">tasks</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span><span class="o">.</span><span class="n">description</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+    <span class="n">help</span> <span class="o">+=</span> <span class="s">&#39;  &#39;</span> <span class="o">+</span> <span class="n">tasks</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span><span class="o">.</span><span class="n">usage</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n\n</span><span class="s">&#39;</span>
+
+  <span class="k">return</span> <span class="n">help</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      <p>Imports a module/package.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">import_at_runtime</span><span class="p">(</span><span class="n">module</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-35'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-35'>#</a>
+      </div>
+      <p>Args:
+  module: Module/package to import</p>
+<p>Returns:
+  Module or package.</p>
+<p>Proper use of this function seems sketchy. Docs claim that only globals() is
+used, but it seems that if fromlist evaluates to False or is not passed in,
+nothing is actually imported. Needs to be a list type (at least to play nice
+with Jython?) and contain a string in the list.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">return</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="nb">globals</span><span class="p">(),</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;0&#39;</span><span class="p">])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-36'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-36'>#</a>
+      </div>
+      <p>Import vital information about a service.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">import_service</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">config_file_path</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-37'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-37'>#</a>
+      </div>
+      <p>The goal of this function is to allow expansion to other "service" classes
+in the future. In the same way that the v2 and v3 API python library uses
+a module called "client", googlecl will do the same.</p>
+<p>Keyword arguments:
+  service: Name of the service to import e.g. 'picasa', 'youtube'
+  config_file_path: Path to config file.</p>
+<p>Returns:
+  Tuple of service_class, tasks, section header and config, where
+    service_class is the class to instantiate for the service
+    tasks is the dictionary mapping names to Task objects
+    section_header is the name of the section in the config file that contains
+                   options specific to the service.
+    config is a configuration file parser.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Your pythonpath: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PYTHONPATH&#39;</span><span class="p">)))</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">package</span> <span class="o">=</span> <span class="n">import_at_runtime</span><span class="p">(</span><span class="s">&#39;googlecl.&#39;</span> <span class="o">+</span> <span class="n">service</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did you specify the service correctly? Must be one of &#39;</span> <span class="o">+</span>
+              <span class="nb">str</span><span class="p">(</span><span class="n">AVAILABLE_SERVICES</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+  <span class="n">config</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">load_configuration</span><span class="p">(</span><span class="n">config_file_path</span><span class="p">)</span>
+  <span class="n">force_gdata_v1</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="n">SECTION_HEADER</span><span class="p">,</span>
+                                   <span class="s">&#39;force_gdata_v1&#39;</span><span class="p">,</span>
+                                   <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                   <span class="n">option_type</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">force_gdata_v1</span><span class="p">:</span>
+    <span class="n">service_module</span> <span class="o">=</span> <span class="n">import_at_runtime</span><span class="p">(</span><span class="s">&#39;googlecl.&#39;</span> <span class="o">+</span> <span class="n">service</span> <span class="o">+</span> <span class="s">&#39;.service&#39;</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">service_module</span> <span class="o">=</span> <span class="n">import_at_runtime</span><span class="p">(</span><span class="s">&#39;googlecl.&#39;</span> <span class="o">+</span> <span class="n">service</span> <span class="o">+</span> <span class="s">&#39;.client&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+      <span class="n">service_module</span> <span class="o">=</span> <span class="n">import_at_runtime</span><span class="p">(</span><span class="s">&#39;googlecl.&#39;</span> <span class="o">+</span> <span class="n">service</span> <span class="o">+</span> <span class="s">&#39;.service&#39;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">service_module</span><span class="o">.</span><span class="n">SERVICE_CLASS</span><span class="p">,</span>
+          <span class="n">package</span><span class="o">.</span><span class="n">TASKS</span><span class="p">,</span>
+          <span class="n">package</span><span class="o">.</span><span class="n">SECTION_HEADER</span><span class="p">,</span>
+          <span class="n">config</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-38'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-38'>#</a>
+      </div>
+      <p>Insert stdin buffer into options or args.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">insert_stdin</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">single_arg_symbol</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="n">split_arg_symbol</span><span class="o">=</span><span class="s">&#39;__&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-39'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-39'>#</a>
+      </div>
+      <p>Args:
+  options: Object containing values for options. Will only be searched for
+      single_arg_symbol.
+  args: List of arguments.
+  single_arg_symbol: Symbol indicating that stdin should be inserted as a
+      single argument.
+  split_arg_symbol: Symbol indicating that stdin should be inserted as a
+      list of arguments. This symbol should only appear in args.</p>
+<p>Returns:
+  Nothing, but args and options are modified in place.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">try</span><span class="p">:</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">single_arg_symbol</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="k">pass</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span>
+
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">split_arg_symbol</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="k">pass</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">expand_as_command_line</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">return</span>
+
+  <span class="k">if</span> <span class="n">single_arg_symbol</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">single_arg_symbol</span><span class="p">:</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">break</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-40'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-40'>#</a>
+      </div>
+      <p>Print help messages to the screen.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">print_help</span><span class="p">(</span><span class="n">service</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-41'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-41'>#</a>
+      </div>
+      <p>Keyword arguments:
+  service: Service to get help on. (Default None, prints general help)
+  tasks: Dictionary of tasks that can be done by the given service.
+         (Default None)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">service</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&#39;Welcome to the Google CL tool!&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  Commands are broken into several parts: &#39;</span>
+    <span class="k">print</span> <span class="s">&#39;    service, task, options, and arguments.&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  For example, in the command&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;      &quot;&gt; picasa post --title &quot;My Cat Photos&quot; photos/cats/*&quot;&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  the service is &quot;picasa&quot;, the task is &quot;post&quot;, the single&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  option is a title of &quot;My Cat Photos&quot;, and the argument is the &#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  path to the photos.&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  The available services are &#39;</span>
+    <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">AVAILABLE_SERVICES</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">apis</span><span class="p">:</span>
+     <span class="k">print</span> <span class="s">&#39;  and via Discovery:&#39;</span>
+     <span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">AVAILABLE_APIS</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+     <span class="k">print</span> <span class="s">&#39;  Enter &quot;&gt; help more&quot; for more detailed help.&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  Enter &quot;&gt; help &lt;service&gt;&quot; for more information on a service.&#39;</span>
+    <span class="k">print</span> <span class="s">&#39;  Or, just &quot;quit&quot; to quit.&#39;</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">print</span> <span class="n">get_task_help</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">tasks</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-42'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-42'>#</a>
+      </div>
+      <p>Prints additional help</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">print_more_help</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-43'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-43'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">print</span> <span class="s">&quot;&quot;&quot;  Additional information:</span>
+<span class="s">    (For Discovery APIs)</span>
+<span class="s">  Enter &quot;&gt; help &lt;service&gt; &lt;fields&gt;&quot; for additional info</span>
+<span class="s">  You may also add a &#39;-v&#39; or &#39;--verbose&#39; tag for even more detailed information.</span>
+
+<span class="s">  Enter &quot;&gt; refresh apis&quot; to update the Discovery APIs list</span>
+<span class="s">  This will allow you to use the latest APIs by default.</span>
+<span class="s">  Older APIs may be used by calling &#39;&gt; &lt;service&gt; &lt;version&gt; &lt;etc&gt;&#39;</span>
+
+<span class="s">  You may add more APIs by providing the path to their Discovery document in the</span>
+<span class="s">  config file, under the parameter &#39;local_apis&#39;</span>
+
+<span class="s">  Global config values may be viewed and edited with &quot;&gt; edit config&quot; &quot;&quot;&quot;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-44'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-44'>#</a>
+      </div>
+      <p>Run an interactive shell for the google commands.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">run_interactive</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-45'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-45'>#</a>
+      </div>
+      <p>Keyword arguments:
+  parser: Object capable of parsing a list of arguments via parse_args.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">history_file</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">HISTORY_FILENAME</span><span class="p">,</span>
+                                        <span class="n">create_missing_dir</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">readline</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">readline</span><span class="o">.</span><span class="n">read_history_file</span><span class="p">(</span><span class="n">history_file</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not read history file.&#39;</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not import readline module.&#39;</span><span class="p">)</span>
+
+  <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">command_string</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s">&#39;&gt; &#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">command_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;python &#39;</span><span class="p">):</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;HINT: No need to include &quot;python&quot; in interactive mode&#39;</span><span class="p">)</span>
+        <span class="n">command_string</span> <span class="o">=</span> <span class="n">command_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;python &#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">command_string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;google &#39;</span><span class="p">):</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;HINT: No need to include &quot;google&quot; in interactive mode&#39;</span><span class="p">)</span>
+        <span class="n">command_string</span> <span class="o">=</span> <span class="n">command_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;google &#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">command_string</span><span class="p">:</span>
+        <span class="k">continue</span>
+      <span class="k">elif</span> <span class="n">command_string</span> <span class="o">==</span> <span class="s">&#39;?&#39;</span><span class="p">:</span>
+        <span class="n">print_help</span><span class="p">()</span>
+      <span class="k">elif</span> <span class="n">command_string</span> <span class="o">==</span> <span class="s">&#39;quit&#39;</span><span class="p">:</span>
+        <span class="k">break</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">args_list</span> <span class="o">=</span> <span class="n">expand_as_command_line</span><span class="p">(</span><span class="n">command_string</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">Error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+          <span class="k">continue</span>
+
+        <span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="o">=</span> <span class="n">parse_command_line</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">args_list</span><span class="p">)</span>
+        <span class="n">run_once</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">),</span> <span class="n">err</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-46'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-46'>#</a>
+      </div>
+      <p>It would be nice if we could simply unregister or reset the
+signal handler defined in the initial if <strong>name</strong> block.
+Windows will raise a KeyboardInterrupt, GNU/Linux seems to also
+potentially raise a ValueError about I/O operation.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="ow">and</span> \
+         <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;I/O operation on closed file&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Error: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">err</span>
+      <span class="k">print</span> <span class="s">&#39;&#39;</span>
+      <span class="k">print</span> <span class="s">&#39;Quit via keyboard interrupt&#39;</span>
+      <span class="k">break</span>
+    <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
+      <span class="k">print</span> <span class="s">&#39;&#39;</span>
+      <span class="k">break</span>
+    <span class="k">except</span> <span class="ne">SystemExit</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-47'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-47'>#</a>
+      </div>
+      <p>optparse.OptParser prints the usage statement and calls
+sys.exit when there are any option errors.
+Printing usage good, SystemExit bad. So catch it and do nothing.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+      <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+  <span class="k">if</span> <span class="s">&#39;readline&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+    <span class="n">readline</span><span class="o">.</span><span class="n">write_history_file</span><span class="p">(</span><span class="n">history_file</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-48'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-48'>#</a>
+      </div>
+      <p>Run one command.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">run_once</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-49'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-49'>#</a>
+      </div>
+      <p>Keyword arguments:
+  options: Options instance as built and returned by optparse.
+  args: Arguments to GoogleCL, also as returned by optparse.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">global</span> <span class="n">discovery</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-50'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-50'>#</a>
+      </div>
+      <p>If we haven't gotten the list of discovery APIs yet, and they're asking for
+a discovery API, figure out their email address and then get a list of
+APIs.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">apis</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">discovery</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span><span class="p">)</span> <span class="ow">or</span> \
+       <span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> \
+       <span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span> <span class="ow">and</span> \
+        <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-51'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-51'>#</a>
+      </div>
+      <p>Is there a better approach than using the calendar API to get the email
+address?</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">service_class</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">section_header</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="n">import_service</span><span class="p">(</span><span class="s">&#39;calendar&#39;</span><span class="p">,</span>
+                                                                    <span class="bp">None</span><span class="p">)</span>
+      <span class="n">email</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">)</span>
+      <span class="n">discovery</span> <span class="o">=</span> <span class="n">DiscoveryManager</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+      <span class="k">global</span> <span class="n">AVAILABLE_APIS</span>
+      <span class="n">AVAILABLE_APIS</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">apis_list</span><span class="p">()</span>
+
+  <span class="n">init_args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[:]</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">task_name</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span><span class="p">:</span>
+      <span class="n">print_help</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Must specify at least a service and a task!&#39;</span><span class="p">)</span>
+    <span class="k">return</span>
+
+  <span class="k">if</span> <span class="n">apis</span> <span class="ow">and</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;refresh&#39;</span> <span class="ow">and</span> <span class="n">task_name</span> <span class="o">==</span> <span class="s">&#39;apis&#39;</span><span class="p">:</span>
+    <span class="n">discovery</span><span class="o">.</span><span class="n">docManager</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">AVAILABLE_APIS</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">apis_list</span><span class="p">()</span>
+    <span class="k">return</span>
+
+  <span class="k">if</span> <span class="n">apis</span> <span class="ow">and</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;edit&#39;</span> <span class="ow">and</span> <span class="n">task_name</span> <span class="o">==</span> <span class="s">&#39;config&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="n">discovery</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">editor</span><span class="p">,</span>
+                   <span class="n">googlecl</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_config_path</span><span class="p">()))</span>
+    <span class="k">return</span>
+
+  <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span> <span class="ow">and</span> <span class="n">task_name</span> <span class="o">==</span> <span class="s">&#39;more&#39;</span><span class="p">:</span>
+    <span class="n">print_more_help</span><span class="p">()</span>
+    <span class="k">return</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-52'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-52'>#</a>
+      </div>
+      <p>Detects if GData is not provided a version number or the path is too long</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">conflict</span> <span class="o">=</span> <span class="p">(</span><span class="n">task_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;v&#39;</span> <span class="ow">and</span> <span class="n">task_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span> <span class="ow">or</span> <span class="p">(</span><span class="n">service</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span> <span class="ow">and</span> <span class="n">args</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-53'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-53'>#</a>
+      </div>
+      <p>Prioritizes using existing GData APIs over Discovery.
+May have to change if/when those are brought over to Discovery...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">task_name</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">conflict</span><span class="p">:</span>
+      <span class="n">service_class</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">section_header</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="n">import_service</span><span class="p">(</span><span class="n">task_name</span><span class="p">,</span>
+                                                                <span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">tasks</span><span class="p">:</span>
+        <span class="n">print_help</span><span class="p">(</span><span class="n">task_name</span><span class="p">,</span> <span class="n">tasks</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">apis</span> <span class="ow">and</span> <span class="n">task_name</span> <span class="ow">in</span> <span class="n">AVAILABLE_APIS</span><span class="p">:</span>
+        <span class="n">discovery</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_args</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="ow">not</span> <span class="n">apis</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not recognize service.&#39;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;If you wanted a Discovery service, make sure you have&#39;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;google-api-python-client installed.&#39;</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not recognize service.&#39;</span><span class="p">)</span>
+      <span class="k">return</span>
+  <span class="k">elif</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">conflict</span><span class="p">:</span>
+      <span class="n">service_class</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">section_header</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="n">import_service</span><span class="p">(</span><span class="n">service</span><span class="p">,</span>
+                                                                <span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">apis</span> <span class="ow">and</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">AVAILABLE_APIS</span><span class="p">:</span>
+      <span class="n">discovery</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">apis</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not recognize service.&#39;</span><span class="p">)</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;If you wanted a Discovery service, make sure you have&#39;</span><span class="p">)</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;google-api-python-client installed.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not recognize service.&#39;</span><span class="p">)</span>
+    <span class="k">return</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">service_class</span><span class="p">:</span>
+    <span class="k">return</span>
+  <span class="n">client</span> <span class="o">=</span> <span class="n">service_class</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-54'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-54'>#</a>
+      </div>
+      <p>Activate debugging output from HTTP requests. "service" clients only!
+"client" versions need to set self.http_client.debug in their own <strong>init</strong></p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">client</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span>
+                                 <span class="s">&#39;debug&#39;</span><span class="p">,</span>
+                                 <span class="n">default</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+                                 <span class="n">option_type</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-55'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-55'>#</a>
+      </div>
+      <p>XXX: Not the best place for this.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s">&#39;http_client&#39;</span><span class="p">):</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">http_client</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">debug</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="n">tasks</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">task_name</span>
+  <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not recognize task, please use one of &#39;</span> <span class="o">+</span> \
+              <span class="nb">str</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="k">return</span>
+
+  <span class="k">if</span> <span class="s">&#39;devkey&#39;</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">required</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-56'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-56'>#</a>
+      </div>
+      <p>If a devkey is required, and there is none specified via an option
+BEFORE fill_out_options, insert the key from file or the key given
+to GoogleCL.
+You can get your own key at http://code.google.com/apis/youtube/dashboard</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">devkey</span><span class="p">:</span>
+      <span class="n">options</span><span class="o">.</span><span class="n">devkey</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">read_devkey</span><span class="p">()</span> <span class="ow">or</span> <span class="s">&#39;AI39si4d9dBo0dX7TnGyfQ68bNiKfEeO7wORCfY3HAgSStFboTgTgAi9nQwJMfMSizdGIs35W9wVGkygEw8ei3_fWGIiGSiqnQ&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-57'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-57'>#</a>
+      </div>
+      <p>fill_out_options will read the key from file if necessary, but will not set
+it since it will always get a non-empty value beforehand.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">fill_out_options</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">section_header</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+  <span class="n">client</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">user</span>
+
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">blog</span><span class="p">:</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">set_missing_default</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;blog&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">blog</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">devkey</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">developer_key</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">devkey</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-58'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-58'>#</a>
+      </div>
+      <p>This may save an invalid dev key -- it's up to the user to specify a
+valid dev key eventually.
+TODO: It would be nice to make this more efficient.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">googlecl</span><span class="o">.</span><span class="n">write_devkey</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">devkey</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-59'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-59'>#</a>
+      </div>
+      <p>Unicode-ize options and args</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">attr_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+      <span class="nb">setattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">TERMINAL_ENCODING</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">safe_decode</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">TERMINAL_ENCODING</span><span class="p">)</span> <span class="k">for</span> <span class="n">string</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-60'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-60'>#</a>
+      </div>
+      <p>Expand options.src. The goal is to expand things like
+--src=~/Photos/album1/* (which does not normally happen)
+XXX: This ought to be in fill_out_options(), along with unicode-ize above.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">src</span><span class="p">:</span>
+    <span class="n">expanded_args</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">expanded_args</span><span class="p">:</span>
+      <span class="n">options</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="n">expanded_args</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">options</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="p">[</span><span class="n">options</span><span class="o">.</span><span class="n">src</span><span class="p">]</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-61'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-61'>#</a>
+      </div>
+      <p>Take a gander at the options filled in.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">LOG</span><span class="o">.</span><span class="n">getEffectiveLevel</span><span class="p">()</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">inspect</span>
+    <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">attr_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">attr</span><span class="p">):</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Option &#39;</span> <span class="o">+</span> <span class="n">attr_name</span> <span class="o">+</span> <span class="s">&#39;: &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">attr</span><span class="p">)))</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;args: &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">args</span><span class="p">)))</span>
+
+  <span class="n">auth_manager</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">authentication</span><span class="o">.</span><span class="n">AuthenticationManager</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+  <span class="n">authenticated</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="n">auth_manager</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">section_header</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">authenticated</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Authentication failed, exiting run_once&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-62'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-62'>#</a>
+      </div>
+      <p>If we've authenticated, save the config values we've been setting.
+And remember the email address that worked!</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">config</span><span class="o">.</span><span class="n">set_missing_default</span><span class="p">(</span><span class="n">section_header</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">write_out_parser</span><span class="p">()</span>
+  <span class="n">run_error</span> <span class="o">=</span> <span class="bp">None</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="n">run_error</span><span class="p">:</span>
+    <span class="n">err_str</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">run_error</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">err_str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;&#39;OAuth&quot;</span><span class="p">):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;OAuth error.  Try re-running with --force-auth.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">run_error</span>
+  <span class="k">if</span> <span class="n">run_error</span> <span class="ow">and</span> <span class="n">LOG</span><span class="o">.</span><span class="n">isEnabledFor</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-63'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-63'>#</a>
+      </div>
+      <p>XXX: This will probably not work if googlecl gets threaded (unlikely)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback_obj</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback_obj</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="k">return</span> <span class="mi">0</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-64'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-64'>#</a>
+      </div>
+      <p>Setup the global (root, basic) configuration for logging.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">setup_logger</span><span class="p">(</span><span class="n">options</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-65'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-65'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">msg_format</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%(message)s</span><span class="s">&#39;</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="n">msg_format</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%(levelname)s</span><span class="s">:</span><span class="si">%(name)s</span><span class="s">:</span><span class="si">%(message)s</span><span class="s">&#39;</span>
+  <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+  <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-66'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-66'>#</a>
+      </div>
+      <p>basicConfig does nothing if it's been called before
+(e.g. in run_interactive loop)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="n">msg_format</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-67'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-67'>#</a>
+      </div>
+      <p>Redundant for single-runs, but necessary for run_interactive.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">LOG</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-68'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-68'>#</a>
+      </div>
+      <p>XXX: Inappropriate location (style-wise).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">gdata</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Gdata will be imported from &#39;</span> <span class="o">+</span> <span class="n">gdata</span><span class="o">.</span><span class="n">__file__</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-69'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-69'>#</a>
+      </div>
+      <p>Set up the parser.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">setup_parser</span><span class="p">(</span><span class="n">loading_usage</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-70'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-70'>#</a>
+      </div>
+      <p>Returns:
+  optparse.OptionParser with options configured.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">available_services</span> <span class="o">=</span> <span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="s">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">AVAILABLE_SERVICES</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;]&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-71'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-71'>#</a>
+      </div>
+      <p>NOTE: Usage string formatted to work with help2man.  After changing it,
+please run:
+'help2man -N -n "command-line access to (some) Google services" \
+ -i ../man/examples.help2man  ./google &gt; google.1'
+then 'man ./google.1' and make sure the generated manpage still looks
+reasonable.  Then save it to man/google.1</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">usage</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Usage: &#39;</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">available_services</span> <span class="o">+</span>
+           <span class="s">&#39; TASK [options]</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;This program provides command-line access to</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;(some) google services via their gdata APIs.</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;Called without a service name, it starts an interactive session.</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;NOTE: GoogleCL will interpret arguments as required options in the</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;order they appear in the descriptions below, excluding options</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;set in the configuration file and non-primary terms in &#39;</span>
+           <span class="s">&#39;parenthesized</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;OR groups. For example:</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\t</span><span class="s">$ google picasa get my_album .</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;is interpreted as &quot;google picasa get --title=my_album --dest=.</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\t</span><span class="s">$ google contacts list john</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;is interpreted as &quot;$ google contacts list &#39;</span>
+           <span class="s">&#39;--fields=&lt;config file def&gt; --title=john --delimiter=,&quot;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;(only true if you have not removed the default definition in the &#39;</span>
+           <span class="s">&#39;config file!)</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;</span><span class="se">\t</span><span class="s">$ google docs get my_doc .</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;is interpreted as &quot;$ google docs get --title=my_doc --dest=.</span><span class="se">\n</span><span class="s">&#39;</span>
+           <span class="s">&#39;(folder is NOT set, since the title option is satisfied first.)</span><span class="se">\n\n</span><span class="s">&#39;</span>
+           <span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">loading_usage</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">AVAILABLE_SERVICES</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span><span class="p">:</span>
+        <span class="k">continue</span>
+      <span class="n">service_package</span> <span class="o">=</span> <span class="n">import_at_runtime</span><span class="p">(</span><span class="s">&#39;googlecl.&#39;</span> <span class="o">+</span> <span class="n">service</span><span class="p">)</span>
+      <span class="n">usage</span> <span class="o">+=</span> <span class="n">get_task_help</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">service_package</span><span class="o">.</span><span class="n">TASKS</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+  <span class="n">parser</span> <span class="o">=</span> <span class="n">NonFatalOptionParser</span><span class="p">(</span><span class="n">usage</span><span class="o">=</span><span class="n">usage</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">VERSION</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--access&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;access&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Specify access/visibility level of an upload&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--blog&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blog&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Blogger only - specify a blog other than your&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; primary.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--cal&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;cal&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Calendar only - specify a calendar other than your&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; primary.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-c&#39;</span><span class="p">,</span> <span class="s">&#39;--category&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;category&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;YouTube only - specify video categories&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; as a comma-separated list, e.g. &quot;Film, Travel&quot;&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--commission&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;commission&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify commission for transaction&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--config&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;config&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Specify location of config file.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--currency&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;currency&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify currency for portfolio&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--devtags&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;devtags&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;YouTube only - specify developer tags&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; as a comma-separated list.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--devkey&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;devkey&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;YouTube only - specify a developer key&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--date&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;date&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Calendar only - date of the event to add/look for. &#39;</span>
+                          <span class="s">&#39;Can also specify a range with a comma.</span><span class="se">\n</span><span class="s">&#39;</span>
+                          <span class="s">&#39;Picasa only - sets the date of the album</span><span class="se">\n</span><span class="s">&#39;</span>
+                          <span class="s">&#39;Finance only - transaction creation date&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--debug&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;debug&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Enable all debugging output, including HTTP data&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--delimiter&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;delimiter&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;,&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Specify a delimiter for the output of the list task.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--dest&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;dest&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Destination. Typically, where to save data being&#39;</span>
+                          <span class="s">&#39; downloaded.&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--draft&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;access&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_const&#39;</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="s">&#39;draft&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Blogger only - post as a draft. Shorthand for &#39;</span>
+                          <span class="s">&#39;--access=draft&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--editor&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;editor&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Docs only - editor to use on a file.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--fields&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;fields&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Fields to list with list task.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-f&#39;</span><span class="p">,</span> <span class="s">&#39;--folder&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;folder&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Docs only - specify folder(s) to upload to &#39;</span><span class="o">+</span>
+                    <span class="s">&#39;/ search in.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--force-auth&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;force_auth&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Force validation step for re-used access tokens&#39;</span> <span class="o">+</span>
+                         <span class="s">&#39; (Overrides --skip-auth).&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--format&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;format&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Docs only - format to download documents as.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--hostid&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;hostid&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Label the machine being used.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-n&#39;</span><span class="p">,</span> <span class="s">&#39;--title&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;title&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Title of the item&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--no-convert&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;convert&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_false&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Google Apps Premier only - do not convert the file&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; on upload. (Else converts to native Google Docs format)&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--notes&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;notes&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify notes for transaction&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="s">&#39;--owner&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;owner&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Username or ID of the owner of the resource. &#39;</span> <span class="o">+</span>
+                          <span class="s">&#39;For example,&#39;</span> <span class="o">+</span>
+                          <span class="s">&quot; &#39;picasa list-albums -o bob&#39; to list bob&#39;s albums&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--photo&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;photo&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Picasa only - specify title or name of photo(s)&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--price&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;price&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify price for transaction&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-q&#39;</span><span class="p">,</span> <span class="s">&#39;--query&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;query&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Full text query string for specifying items.&#39;</span>
+                          <span class="o">+</span> <span class="s">&#39; Searches on titles, captions, and tags.&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--quiet&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;quiet&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Print only prompts and error messages&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--reminder&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;reminder&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Calendar only - specify time for added event&#39;s &quot;</span> <span class="o">+</span>
+                          <span class="s">&#39;reminder, e.g. &quot;10m&quot;, &quot;3h&quot;, &quot;1d&quot;&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--shares&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;shares&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify amount of shares &quot;</span> <span class="o">+</span>
+                          <span class="s">&quot;for transaction&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--skip-auth&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;skip_auth&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Skip validation step for re-used access tokens.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--src&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;src&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Source. Typically files to upload.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-s&#39;</span><span class="p">,</span> <span class="s">&#39;--summary&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;summary&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Description of the upload, &#39;</span> <span class="o">+</span>
+                          <span class="s">&#39;or file containing the description.&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-t&#39;</span><span class="p">,</span>  <span class="s">&#39;--tags&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;tags&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Tags for item, e.g. &quot;Sunsets, Earth Day&quot;&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--ticker&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;ticker&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify ticker&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--ttype&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;ttype&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify transaction type, &quot;</span> <span class="o">+</span>
+                          <span class="s">&#39;e.g. &quot;Bye&quot;, &quot;Sell&quot;, &quot;Buy to Cover&quot;, &quot;Sell Short&quot;&#39;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--txnid&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;txnid&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;Finance only - specify transaction id&quot;</span><span class="p">))</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-u&#39;</span><span class="p">,</span> <span class="s">&#39;--user&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;user&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Username to log in with for the service.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-v&#39;</span><span class="p">,</span> <span class="s">&#39;--verbose&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;verbose&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Print all messages.&#39;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--yes&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;prompt&#39;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_false&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;Answer &quot;yes&quot; to all prompts&#39;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">parser</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-72'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-72'>#</a>
+      </div>
+      <p>Entry point for GoogleCL script.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-73'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-73'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">loading_usage</span> <span class="o">=</span> <span class="s">&#39;--help&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span>
+  <span class="n">parser</span> <span class="o">=</span> <span class="n">setup_parser</span><span class="p">(</span><span class="n">loading_usage</span><span class="p">)</span>
+
+  <span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="o">=</span> <span class="n">parse_command_line</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+  <span class="n">setup_logger</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+    <span class="n">run_interactive</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">is_windows</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s">&#39;win32&#39;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">expand_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">is_windows</span><span class="p">,</span> <span class="n">is_windows</span><span class="p">)</span>
+    <span class="n">insert_stdin</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">run_once</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+      <span class="k">print</span> <span class="s">&#39;&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-74'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-74'>#</a>
+      </div>
+      <p>Handler for SIGINT signal.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">exit_from_int</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-75'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-75'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">print</span> <span class="s">&#39;&#39;</span>
+  <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+  <span class="kn">import</span> <span class="nn">signal</span>
+  <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">exit_from_int</span><span class="p">)</span>
+  <span class="n">main</span><span class="p">()</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
