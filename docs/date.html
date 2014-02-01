@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>date.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>date.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Classes and functions for manipulating strings into dates.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Some parts are specific to Google Calendar."""</p>
+<p><strong>author</strong> = 'thmiller@google.com (Tom Miller)'
+import datetime
+import re
+import googlecl.base
+import time
+import logging</p>
+<p>LOG = logging.getLogger("date.py")
+QUERY_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.000Z'</p>
+<p>ACCEPTED_DAY_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+ACCEPTED_DAY_FORMATS = ['%Y-%m-%d',
+                        '%m/%d',
+                        '%m/%d/%Y',
+                        '%m/%d/%y',
+                        '%b %d',
+                        '%B %d',
+                        '%b %d %Y',
+                        '%B %d %Y']
+ACCEPTED_TIME_FORMATS = ['%I%p',
+                         '%I %p',
+                         '%I:%M%p',
+                         '%I:%M %p',
+                         '%H:%M']</p>
+<h1>Regular expression for strings that specify a time that could be afternoon or</h1>
+<h1>morning. First group will be the hour, second the minutes.</h1>
+<p>AMBIGUOUS_TIME_REGEX = '((?:1[0-2])|(?:[1-9]))?(?::([0-9]{2}))?$'</p>
+<p>_DAY_TIME_TOKENIZERS = ['@', ' at ']
+_RANGE_TOKENIZERS = [',']</p>
+<p>class Error(Exception):
+Base error for this module.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Failed to parse a token.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">ParsingError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;Failed to parse &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Creates a datetime object with zeroed-out time parameters.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">datetime_today</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                         <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                         <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                         <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Determines a duration from a non-time token.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">determine_duration</span><span class="p">(</span><span class="n">duration_token</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Args:
+  duration_token: String of hours and minutes.</p>
+<p>Returns:
+  Timedelta object representing positive offset of hours and minutes.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span> <span class="o">=</span> <span class="n">parse_ambiguous_time</span><span class="p">(</span><span class="n">duration_token</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">hour</span> <span class="ow">or</span> <span class="n">minute</span><span class="p">):</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Duration must be in form of [hours][:minutes]&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">None</span>
+  <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Return the UTC offset of local zone at present time as a timedelta.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_utc_timedelta</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()</span><span class="o">.</span><span class="n">tm_isdst</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">daylight</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">altzone</span><span class="o">/</span><span class="mi">3600</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">timezone</span><span class="o">/</span><span class="mi">3600</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Parses an ambiguous time into an hour and minute value.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">parse_ambiguous_time</span><span class="p">(</span><span class="n">time_token</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Args:
+  time_token: Ambiguous time to be parsed. "Ambiguous" means it could be
+      before noon or after noon. For example, "5:30" or "12".</p>
+<p>Returns:
+  Tuple of (hour, minute). The hour is still not on a 24 hour clock.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">ambiguous_time</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">AMBIGUOUS_TIME_REGEX</span><span class="p">,</span> <span class="n">time_token</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">ambiguous_time</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+
+  <span class="n">hour_text</span> <span class="o">=</span> <span class="n">ambiguous_time</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="n">minute_text</span> <span class="o">=</span> <span class="n">ambiguous_time</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">hour_text</span><span class="p">:</span>
+    <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hour_text</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">hour</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">if</span> <span class="n">minute_text</span><span class="p">:</span>
+    <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minute_text</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">minute</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">return</span> <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Splits a string based on a list of potential substrings.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">split_string</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">tokenizers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Strings will only be split once, if at all. That is, at most two tokens can be
+returned, even if a tokenizer is found in multiple positions. The left-most
+tokenizer will be used to split.</p>
+<p>Args:
+  string: String to split.
+  tokenizers: List of strings that should act as a point to split around.
+      Default None to use range tokenizers defined in this module.</p>
+<p>Returns:
+  Tuple of (left_token, [True|False], right_token). The middle element is True
+  if a tokenizer was found in the provided string, and is False otherwise.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">string</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">tokenizers</span><span class="p">:</span>
+    <span class="n">tokenizers</span> <span class="o">=</span> <span class="n">_RANGE_TOKENIZERS</span>
+  <span class="k">for</span> <span class="n">tokenizer</span> <span class="ow">in</span> <span class="n">tokenizers</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">string</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">left_token</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">right_token</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">left_token</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="bp">True</span><span class="p">,</span> <span class="n">right_token</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">Date</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Initializes the object.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_datetime</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">utc_datetime</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">all_day</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>The datetime objects passed in are treated as naive -- no timezone info will
+be read from them.</p>
+<p>Args:
+  local_datetime: A datetime object that specifies the date and time in the
+      local timezone. Default None to set off utc_datetime.
+  utc_datetime: Datetime object that specifies date and time in Coordinated
+      Universal Time (UTC). Default None to set off local_datetime.
+  all_day: Set True to indicate this Date is associated with an all day, or
+      "time-less" date. Default False.</p>
+<p>Raises:
+  Error: local_datetime and utc_datetime are both left undefined.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">local_datetime</span> <span class="ow">or</span> <span class="n">utc_datetime</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Need to provide a local or UTC datetime&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">local_datetime</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">local</span> <span class="o">=</span> <span class="n">local_datetime</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">utc_datetime</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span> <span class="o">+</span> <span class="n">get_utc_timedelta</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">utc_datetime</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">=</span> <span class="n">utc_datetime</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">local_datetime</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">-</span> <span class="n">get_utc_timedelta</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">all_day</span> <span class="o">=</span> <span class="n">all_day</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Returns a Date with other added to its time.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">Date</span><span class="p">(</span><span class="n">utc_datetime</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">+</span> <span class="n">other</span><span class="p">),</span> <span class="n">all_day</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">all_day</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Returns a Date with other subtracted from its time.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">Date</span><span class="p">(</span><span class="n">utc_datetime</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">-</span> <span class="n">other</span><span class="p">),</span> <span class="n">all_day</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">all_day</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Formats local datetime info into human-friendly string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">basic_string_format</span> <span class="o">=</span> <span class="s">&#39;%m/</span><span class="si">%d</span><span class="s">/%Y&#39;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">basic_string_format</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">basic_string_format</span> <span class="o">+</span> <span class="s">&#39; %H:%M&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Converts UTC data to specific format string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_string</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">format_string</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Converts UTC data to query-friendly, date-inclusive string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_inclusive_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Note: This behavior is specific to Google Calendar.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>If it's an all-day date, we need to boost the time by a day to make it
+inclusive.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">new_datetime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>The smallest unit Calendar appears to concern itself with
+is minutes, so add a minute to make it inclusive.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">new_datetime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">utc</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_datetime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">QUERY_DATE_FORMAT</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      <p>Converts UTC data to a query-friendly string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_format</span><span class="p">(</span><span class="n">QUERY_DATE_FORMAT</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>Converts UTC data to timestamp in seconds.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      <p>Returns:
+  Seconds since the epoch as a float.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">format_string</span><span class="p">),</span>
+                                     <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">T%H:%M&#39;</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      <p>Returns datetime info formatted to Google Calendar "when" style.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_when</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-35'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-35'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-36'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-36'>#</a>
+      </div>
+      <p>All day events must leave off hour data.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_format</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-37'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-37'>#</a>
+      </div>
+      <p>Otherwise, treated like a query string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_query</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-38'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-38'>#</a>
+      </div>
+      <p>Produces Date objects given data.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DateParser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-39'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-39'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-40'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-40'>#</a>
+      </div>
+      <p>Initializes the DateParser object.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">today</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">now</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-41'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-41'>#</a>
+      </div>
+      <p>Args:
+  today: Function capable of giving the current local date. Default None to
+      use datetime_today
+  now: Function capable of giving the current local time. Default None to
+      use datetime.datetime.now</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">today</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">today</span> <span class="o">=</span> <span class="n">datetime_today</span>
+    <span class="k">if</span> <span class="n">now</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">today</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">=</span> <span class="n">now</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-42'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-42'>#</a>
+      </div>
+      <p>Parses text into a Date object.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">shift_dates</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-43'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-43'>#</a>
+      </div>
+      <p>Args:
+  text: String representation of one date, or an offset from a date. Will be
+      interpreted as local time, unless "UTC" appears somewhere in the text.
+  base: Starting point for this Date. Used if the text represents an hour,
+      or an offset.
+  shift_dates: If the date is earlier than self.today(), and the year is not
+      specified, shift it to the future. True by default.
+      Set to False if you want to set a day in the past without referencing
+      the year. For example, today is 10/25/2010. Parsing "10/24" with
+      shift_dates=True will return a date of 10/24/2011. If
+      shift_dates=False, will return a date of 10/24/2010.</p>
+<p>Returns:
+  Date object.</p>
+<p>Raises:
+  ParsingError: Given text could not be parsed.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">local_datetime</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">all_day</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-44'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-44'>#</a>
+      </div>
+      <p>Unlikely anyone uses this, but if so, it's done in one shot</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">all_info</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">ACCEPTED_DAY_TIME_FORMAT</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+      <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">Date</span><span class="p">(</span><span class="n">local_datetime</span><span class="o">=</span><span class="n">all_info</span><span class="p">,</span> <span class="n">all_day</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">day_token</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">time_token</span> <span class="o">=</span> <span class="n">split_string</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">_DAY_TIME_TOKENIZERS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">day_token</span> <span class="ow">or</span> <span class="n">time_token</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="n">ParsingError</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="n">past_time_to_tomorrow</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">if</span> <span class="n">day_token</span><span class="p">:</span>
+      <span class="n">day</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">determine_day</span><span class="p">(</span><span class="n">day_token</span><span class="p">,</span> <span class="n">shift_dates</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">day</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-45'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-45'>#</a>
+      </div>
+      <p>If we couldn't figure out the day...
+...Calendar will shift times that already happened to tomorrow</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">past_time_to_tomorrow</span> <span class="o">=</span> <span class="bp">True</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-46'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-46'>#</a>
+      </div>
+      <p>...Maybe the day_token is actually a time_token</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">time_token</span> <span class="o">=</span> <span class="n">day_token</span>
+        <span class="k">if</span> <span class="n">base</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-47'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-47'>#</a>
+      </div>
+      <p>... and we'll use the starting point passed in.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>          <span class="n">day</span> <span class="o">=</span> <span class="n">base</span>
+      <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-48'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-48'>#</a>
+      </div>
+      <p>If there's no time token, we're parsing an all day date.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">all_day</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">time_token</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">time_token</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">time_token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">):</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">determine_duration</span><span class="p">(</span><span class="n">time_token</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">delta</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">day</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-49'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-49'>#</a>
+      </div>
+      <p>Durations go off of right now.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>          <span class="n">day</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">time_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">determine_time</span><span class="p">(</span><span class="n">time_token</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">time_offset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+          <span class="n">delta</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">past_time_to_tomorrow</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_has_passed</span><span class="p">(</span><span class="n">time_offset</span><span class="p">):</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">time_offset</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="mi">24</span><span class="p">,</span>
+                                       <span class="n">minutes</span><span class="o">=</span><span class="n">time_offset</span><span class="o">.</span><span class="n">minute</span><span class="p">)</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">time_offset</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span>
+                                       <span class="n">minutes</span><span class="o">=</span><span class="n">time_offset</span><span class="o">.</span><span class="n">minute</span><span class="p">)</span>
+          <span class="k">if</span> <span class="ow">not</span> <span class="n">day</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-50'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-50'>#</a>
+      </div>
+      <p>Hour/minutes (i.e. not durations) go off of the date.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">day</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+      <span class="k">if</span> <span class="n">delta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">local_datetime</span> <span class="o">=</span> <span class="n">day</span> <span class="o">+</span> <span class="n">delta</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">local_datetime</span> <span class="o">=</span> <span class="n">day</span>
+
+    <span class="k">if</span> <span class="n">local_datetime</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">Date</span><span class="p">(</span><span class="n">local_datetime</span><span class="o">=</span><span class="n">local_datetime</span><span class="p">,</span> <span class="n">all_day</span><span class="o">=</span><span class="n">all_day</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">ParsingError</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-51'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-51'>#</a>
+      </div>
+      <p>"Checks to see if date has passed.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_day_has_passed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-52'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-52'>#</a>
+      </div>
+      <p>Args:
+  date: Datetime object to compare to today.</p>
+<p>Returns:
+  True if date is earlier than today, False otherwise.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">today</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">month</span> <span class="o">&lt;</span> <span class="n">today</span><span class="o">.</span><span class="n">month</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="n">today</span><span class="o">.</span><span class="n">month</span> <span class="ow">and</span> <span class="n">date</span><span class="o">.</span><span class="n">day</span> <span class="o">&lt;</span> <span class="n">today</span><span class="o">.</span><span class="n">day</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-53'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-53'>#</a>
+      </div>
+      <p>Parses day token into a date.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">determine_day</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day_token</span><span class="p">,</span> <span class="n">shift_dates</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-54'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-54'>#</a>
+      </div>
+      <p>Args:
+  day_token: String to be interpreted as a year, month, and day.
+  shift_dates: Indicates if past dates should be shifted to next year. Set
+      True to move the date to next year if the date has already occurred
+      this year, False otherwise.</p>
+<p>Returns:
+  Datetime object with year, month, and day fields filled in if the
+  day_token could be parsed. Otherwise, None.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">day_token</span> <span class="o">==</span> <span class="s">&#39;tomorrow&#39;</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">day_token</span> <span class="o">==</span> <span class="s">&#39;today&#39;</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">date</span><span class="p">,</span> <span class="n">valid_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_time</span><span class="p">(</span><span class="n">day_token</span><span class="p">,</span> <span class="n">ACCEPTED_DAY_FORMATS</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">date</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> did not match any expected day formats&#39;</span> <span class="o">%</span> <span class="n">day_token</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-55'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-55'>#</a>
+      </div>
+      <p>If the year was not explicitly mentioned...
+(strptime will set a default year of 1900)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="n">valid_format</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;%y&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_day_has_passed</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="ow">and</span> <span class="n">shift_dates</span><span class="p">:</span>
+          <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">date</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-56'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-56'>#</a>
+      </div>
+      <p>Parses time token into a time.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">determine_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_token</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-57'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-57'>#</a>
+      </div>
+      <p>Note: ambiguous times like "6" are converted according to how Google
+Calendar interprets them. So "1" - "6" are converted to 13-18 on a 24 hour
+clock.</p>
+<p>Args:
+  time_token: String to be interpreted as an hour and minute.</p>
+<p>Returns:
+  Time object with hour and minute fields filled in if the
+  time_token could be parsed. Otherwise, None.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span> <span class="o">=</span> <span class="n">parse_ambiguous_time</span><span class="p">(</span><span class="n">time_token</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">hour</span> <span class="ow">or</span> <span class="n">minute</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-58'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-58'>#</a>
+      </div>
+      <p>The ambiguous hours arranged in order, according to Google Calendar:
+7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">hour</span> <span class="ow">and</span> <span class="n">hour</span> <span class="o">&lt;=</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="n">hour</span> <span class="o">+=</span> <span class="mi">12</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">tmp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_time</span><span class="p">(</span><span class="n">time_token</span><span class="p">,</span> <span class="n">ACCEPTED_TIME_FORMATS</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">tmp</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> did not match any expected time formats&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">None</span>
+      <span class="n">hour</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">hour</span>
+      <span class="n">minute</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">minute</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-59'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-59'>#</a>
+      </div>
+      <p>Returns date data contained in a string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_extract_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_string</span><span class="p">,</span> <span class="n">possible_formats</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-60'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-60'>#</a>
+      </div>
+      <p>Args:
+  time_string: String representing a date and/or time.
+  possible_formats: List of possible formats "time" may be in.</p>
+<p>Returns:
+  Tuple of (datetime, format) with the datetime object populated by data
+  found in "time" according to the returned format, or (None, None)
+  if no formats matched.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">time_format</span> <span class="ow">in</span> <span class="n">possible_formats</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">time_string</span><span class="p">,</span> <span class="n">time_format</span><span class="p">)</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">continue</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">date</span><span class="p">,</span> <span class="n">time_format</span>
+    <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-61'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-61'>#</a>
+      </div>
+      <p>Checks if time has already passed the current time.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_time_has_passed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_container</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-62'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-62'>#</a>
+      </div>
+      <p>Args:
+  time_container: Object with hour and minute fields.</p>
+<p>Returns:
+  True if the given time has passed, False otherwise.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">time_container</span><span class="o">.</span><span class="n">hour</span> <span class="o">&lt;</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">time_container</span><span class="o">.</span><span class="n">hour</span> <span class="o">==</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span> <span class="ow">and</span>
+             <span class="n">time_container</span><span class="o">.</span><span class="n">minute</span> <span class="o">&lt;</span> <span class="n">now</span><span class="o">.</span><span class="n">minute</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-63'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-63'>#</a>
+      </div>
+      <p>Holds info on a range of dates entered by the user.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DateRange</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-64'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-64'>#</a>
+      </div>
+      <p>Initializes the object.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">is_range</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-65'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-65'>#</a>
+      </div>
+      <p>Args:
+  start: Start of the range.
+  end: End of the range.
+  is_range: Set True if the user specified this range as a range, False if
+      it was interpreted as a range.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">specified_as_range</span> <span class="o">=</span> <span class="n">is_range</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-66'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-66'>#</a>
+      </div>
+      <p>Returns Google Calendar friendly text for "when" attribute.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_when</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-67'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-67'>#</a>
+      </div>
+      <p>Raises:
+  Error: starting point or ending point are not defined.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Cannot convert range of dates without start and end points.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">specified_as_range</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-68'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-68'>#</a>
+      </div>
+      <p>If only a start date was given...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span>
+    <span class="k">return</span> <span class="n">start</span><span class="o">.</span><span class="n">to_when</span><span class="p">(),</span> <span class="n">end</span><span class="o">.</span><span class="n">to_when</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-69'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-69'>#</a>
+      </div>
+      <p>Parser that treats strings as ranges.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DateRangeParser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-70'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-70'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-71'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-71'>#</a>
+      </div>
+      <p>Initializes the object.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">today</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">now</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">range_tokenizers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-72'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-72'>#</a>
+      </div>
+      <p>Args:
+  today: Callback that returns the date.
+  now: Callback that returns the date and time.
+  range_tokenizers: List of strings that will be used to split date strings
+      into tokens. Default None to use module default.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">date_parser</span> <span class="o">=</span> <span class="n">DateParser</span><span class="p">(</span><span class="n">today</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">range_tokenizers</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">range_tokenizers</span> <span class="o">=</span> <span class="n">_RANGE_TOKENIZERS</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">range_tokenizers</span> <span class="o">=</span> <span class="n">range_tokenizers</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-73'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-73'>#</a>
+      </div>
+      <p>"Parses a string into a start and end date.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_string</span><span class="p">,</span> <span class="n">shift_dates</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-74'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-74'>#</a>
+      </div>
+      <p>Note: This is Google Calendar specific. If date_string does not contain a
+range tokenizer, it will be treated as the starting date of a one day range.</p>
+<p>Args:
+  date_string: String to parse.
+  shift_dates: Whether or not to shift a date to next year if it has
+      occurred earlier than today. See documentation for DateParser. Default
+      False.</p>
+<p>Returns:
+  Tuple of (start_date, end_date), representing start and end dates of the
+  range. Either may be None, in which case it is an open range (i.e. from
+  start until the distant future, or from the distant past until the end
+  date.) If date_string is empty or None, this will be (None, None).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">start_date</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">end_date</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">start_text</span><span class="p">,</span> <span class="n">is_range</span><span class="p">,</span> <span class="n">end_text</span> <span class="o">=</span> <span class="n">split_string</span><span class="p">(</span><span class="n">date_string</span><span class="p">,</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">range_tokenizers</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">start_text</span><span class="p">:</span>
+      <span class="n">start_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">start_text</span><span class="p">,</span> <span class="n">shift_dates</span><span class="o">=</span><span class="n">shift_dates</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">end_text</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">start_date</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">start_date</span><span class="o">.</span><span class="n">local</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="bp">None</span>
+      <span class="n">end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">end_text</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span>
+                                        <span class="n">shift_dates</span><span class="o">=</span><span class="n">shift_dates</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_range</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-75'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-75'>#</a>
+      </div>
+      <p>If no range tokenizer was given, the end date is effectively the day
+after the given date.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">end_date</span> <span class="o">=</span> <span class="n">start_date</span>
+    <span class="k">return</span> <span class="n">DateRange</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">is_range</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
