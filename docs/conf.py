@@ -196,7 +196,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('stuff', 'googlecl.tex', u'googlecl Documentation',
+  ('index', 'googlecl.tex', u'googlecl Documentation',
    u'Vinit Kumar', 'manual'),
 ]
 
@@ -240,7 +240,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('stuff', 'googlecl', u'googlecl Documentation',
+  ('index', 'googlecl', u'googlecl Documentation',
    u'Vinit Kumar', 'googlecl', 'One line description of project.',
    'Miscellaneous'),
 ]
