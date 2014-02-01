@@ -1,37 +1,35 @@
-##Google CL
+#Google CL
 
 [![Downloads](https://pypip.in/d/google_cl/badge.png)](https://crate.io/package/google_cl)
 
-GoogleCl on github is a fork of [googlecl](https://code.google.com/p/googlecl/) that was written by Mr. Tom H. Miller 
-of Google. Currently the project is mainly in inactive stage in terms of development. I will try to add new features 
-and fix some existing bugs in this period.
+GoogleCl is a github fork of [googlecl](https://code.google.com/p/googlecl/) that was written by Mr. Tom H. Miller, Google. Because it is no longer actively developed there, this is an effort to keep the project alive and rolling.
 
 
-### HOW TO INSTALL
+## HOW TO INSTALL
 
-
-Short instructions:
-From the command line, in the directory as this file, run
+Installation is simple:
 
 ```bash
-$ sudo python setup.py install
+$ git clone https://github.com/vinitkumar/googlecl.git
+$ python setup.py install
 ```
 
-or
+## Current Version:
 
-```bash
-$ python setup.py install --home=~
-```
+After small fixes, I moved the version to 0.9.14. Hence will be tagging the code as the same. Also, Semver will be followed throughout. 
 
-(remember to set your PYTHONPATH to include your home directory if you do it this way)
+I have changed and moved bit of original documentation for sake for more readability. In case, you want to consult old documentation, check here: https://github.com/vinitkumar/googlecl/wiki
 
-### Contribution:
+## Contribution:
 
-- Create new issues if you find something that is not working.
-- Original styleguide of the project will be followed throughout. It is kind of a big projects so pay sometime to get hang of it.
-- Suggestions and contributions are always welcome.
+The issues from Google Code repo of GoogleCL has been imported to this repo here: [Open Issues]( https://github.com/vinitkumar/googlecl/issues?labels=Priority-Medium&state=open)
 
+If you wish to help in the development, fork the repo and send a PR fixing one of the issues. I will be glad to 
+add you as an collaborator.
 
+In case you wish to read more documentation about the project, the same has been generated and is live here:
+
+[Documentation](http://vinitkumar.me/googlecl/)
 
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/vinitkumar/googlecl/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
