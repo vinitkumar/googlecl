@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>__init__.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>__init__.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2011 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Subprogram for GoogleCL which handles all requests</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>using the Discovery service</p>
+<p>This program uses the Discovery API to take interact with other APIs.
+It is called when GoogleCL cannot identify a requested service as using gdata.
+Syntax is generally similar to using gdata services.</p>
+<p>General usage (omitting initial 'google'):</p>
+<blockquote>
+<p><service> <method path> <parameters>
+help <service> <path>
+format <service> <method path></p>
+</blockquote>
+<p>Examples:
+  # Creating a new shortened goo.gl URL
+  urlshortener insert --body {"longUrl":"<longUrl>"}</p>
+<p># Getting data for a shortened goo.gl URL
+  urlshortener url get <shortUrl></p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">httplib2</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">googlecl</span>
+
+<span class="kn">from</span> <span class="nn">apiclient.discovery</span> <span class="kn">import</span> <span class="n">build_from_document</span>
+<span class="kn">from</span> <span class="nn">googlecl.discovery</span> <span class="kn">import</span> <span class="n">authentication</span>
+<span class="kn">from</span> <span class="nn">googlecl.discovery</span> <span class="kn">import</span> <span class="n">output</span>
+<span class="kn">from</span> <span class="nn">googlecl.discovery</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span> <span class="nn">googlecl.discovery</span> <span class="kn">import</span> <span class="n">docs</span>
+<span class="kn">import</span> <span class="nn">simplejson</span> <span class="kn">as</span> <span class="nn">json</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span>
+<span class="n">DISCOVERY_URI</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/discovery/v1/apis/{api}/{apiVersion}/rest&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DiscoveryManager</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DefaultManager</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">docManager</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">DocManager</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">local_apis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">base_url</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Primary function for the program</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argv</span><span class="p">):</span>
+   <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Executes methods, displays help, and organizes formatting for services 
+using Discovery</p>
+<p>Args:
+  cache: A cache, which may already contain objects to be used
+  argv: The arguments, parsed into a list as from the command line</p>
+<p>Determines if the help, format, or default is being called</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Running Discovery...&#39;</span><span class="p">)</span>
+    <span class="n">isHelp</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;help&#39;</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">if</span> <span class="n">isHelp</span><span class="p">:</span>
+      <span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+      <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;--verbose&#39;</span> <span class="ow">or</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;-v&#39;</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">http</span> <span class="o">=</span> <span class="n">httplib2</span><span class="o">.</span><span class="n">Http</span><span class="p">()</span>
+    
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Parsing service...&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Fetches service, version, docs, etc. </p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">try</span><span class="p">:</span>
+      <span class="n">servicename</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docManager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">argv</span><span class="p">,</span> <span class="n">isHelp</span><span class="p">,</span>
+                                                            <span class="n">verbose</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+      <span class="k">return</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Managing auth...&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Checks if credentials are needed and, if so, whether they are possessed.
+If not, gets appropriate credentials.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="s">&#39;auth&#39;</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+      <span class="k">if</span> <span class="s">&#39;--force-auth&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s">&#39;--force-auth&#39;</span><span class="p">)</span>
+        <span class="n">force_auth</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">force_auth</span> <span class="o">=</span> <span class="bp">False</span>
+      <span class="n">http</span> <span class="o">=</span> <span class="n">authentication</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">servicename</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">http</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">client_secret</span><span class="p">,</span> <span class="n">force_auth</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Builds the service and finds the method</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">service</span> <span class="o">=</span> <span class="n">build_from_document</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span> <span class="n">DISCOVERY_URI</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="n">http</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">service</span> <span class="o">=</span> <span class="n">build_from_document</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span> <span class="n">DISCOVERY_URI</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span>
+                      <span class="n">developerKey</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">devkey2</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="n">http</span><span class="p">)</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Determining task...&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">metinfo</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">getMethod</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>LOG.error('Did not recognize task.')</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">return</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Parsing parameters...&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">fill_out_options</span><span class="p">(</span><span class="n">metinfo</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">raise</span>
+      <span class="k">return</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Executing method...&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">resp</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+      <span class="k">return</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Displaying output...&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Displays formatted output</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">output</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataManager</span><span class="o">.</span><span class="n">formatting</span><span class="p">)</span>
+   <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&#39;Uncaught error&#39;</span>
+    <span class="k">raise</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">apis_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Returns a list of the APIs that may be used</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docManager</span><span class="o">.</span><span class="n">directory</span><span class="p">[</span><span class="s">&#39;items&#39;</span><span class="p">]]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Locates the method to be executed</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">getMethod</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>apable of finding some methods implicitly
+isplays assistance if method isn't identified</p>
+<p>rgs:
+ service: The service object being used
+ doc: Documentation describing the service
+ args: List containing the method path to be followed</p>
+<p>eturns:
+ A tuple of the meta-info describing the method, 
+ the method itself, and the parameters for the method</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">obj</span> <span class="o">=</span> <span class="n">doc</span>
+  <span class="n">attr</span> <span class="o">=</span> <span class="n">service</span>
+  <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">while</span> <span class="s">&#39;resources&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">or</span> <span class="s">&#39;methods&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;resources&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">]:</span>
+      <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">][</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+      <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;methods&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">]:</span>
+      <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">][</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+      <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="s">&#39;resources&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s">&#39;methods&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">])</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
+      <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">][</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">elif</span> <span class="s">&#39;methods&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s">&#39;resources&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">])</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">][</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">print</span> <span class="s">&#39;Did not recognize task.&#39;</span>
+      <span class="k">if</span> <span class="s">&#39;methods&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Possible methods: &#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;methods&#39;</span><span class="p">]))</span>
+      <span class="k">if</span> <span class="s">&#39;resources&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Possible resources: &#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s">&#39;resources&#39;</span><span class="p">]))</span>
+      <span class="k">return</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+      <span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span><span class="p">()</span>
+  <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

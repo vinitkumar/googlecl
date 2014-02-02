@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>service.py</title>
+  <link rel="stylesheet" href="../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>service.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Basic service extensions for the gdata python client library for use on</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>the command line."""</p>
+<p>import gdata.service
+import googlecl
+import googlecl.base
+import logging</p>
+<p>LOG = logging.getLogger(<strong>name</strong>)</p>
+<p>class BaseServiceCL(googlecl.base.BaseCL):</p>
+<p>Extension of gdata.GDataService specific to GoogleCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span>
+               <span class="n">request_error_class</span><span class="o">=</span><span class="n">gdata</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">RequestError</span><span class="p">,</span>
+               <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">BaseServiceCL</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                        <span class="n">config</span><span class="p">,</span>
+                                        <span class="n">request_error_class</span><span class="p">,</span>
+                                        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                                        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Most services using old gdata API have to disable ssl.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="bp">False</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Used for automatic retries of Get/Delete requests that fail due to 302
+errors. See BaseCL.retry_operation.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">original_get</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Get</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">original_delete</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Delete</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">original_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Post</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">original_put</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Put</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Get</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_get</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Delete</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_delete</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_post</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Put</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_put</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Initialized googlecl.service.BaseServiceCL&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Retries the Get method.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">retry_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">original_operation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_get</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_operation</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Retries the Delete method.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">retry_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">original_operation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_delete</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_operation</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Retries the Post method.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">retry_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">original_operation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_post</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_operation</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Retries the Put method.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">retry_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">original_operation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_put</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_operation</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Do all the steps involved with getting an OAuth access token.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">request_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">display_name</span><span class="p">,</span> <span class="n">scopes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">browser</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Keyword arguments:
+  domain: Domain to request access for.
+      (Sets the hd query parameter for the authorization step).
+  display_name: Descriptor for the machine doing the requesting.
+  scopes: String or list/tuple of strings describing scopes to request
+      access to. Default None for default scope of service.
+  browser: Browser to use to open authentication request url. Default None
+      for no browser launch, and just displaying the url.</p>
+<p>Returns:
+  True if access token was succesfully retrieved and set, otherwise False.</p>
+<p>Installed applications do not have a pre-registration and so follow
+directions for unregistered applications</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">SetOAuthInputParameters</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">OAuthSignatureMethod</span><span class="o">.</span><span class="n">HMAC_SHA1</span><span class="p">,</span>
+                                 <span class="n">consumer_key</span><span class="o">=</span><span class="s">&#39;anonymous&#39;</span><span class="p">,</span>
+                                 <span class="n">consumer_secret</span><span class="o">=</span><span class="s">&#39;anonymous&#39;</span><span class="p">)</span>
+    <span class="n">fetch_params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;xoauth_displayname&#39;</span><span class="p">:</span><span class="n">display_name</span><span class="p">}</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>First and third if statements taken from
+gdata.service.GDataService.FetchOAuthRequestToken.
+Need to do this detection/conversion here so we can add the 'email' API</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">scopes</span><span class="p">:</span>
+      <span class="n">scopes</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">lookup_scopes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scopes</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+      <span class="n">scopes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scopes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scopes</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="n">scopes</span> <span class="o">=</span> <span class="p">[</span><span class="n">scopes</span><span class="p">,]</span>
+    <span class="n">scopes</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;https://www.googleapis.com/auth/userinfo#email&#39;</span><span class="p">])</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Scopes being requested: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">scopes</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">request_token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FetchOAuthRequestToken</span><span class="p">(</span><span class="n">scopes</span><span class="o">=</span><span class="n">scopes</span><span class="p">,</span>
+                                                  <span class="n">extra_parameters</span><span class="o">=</span><span class="n">fetch_params</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">gdata</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">FetchingOAuthRequestTokenFailed</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;body&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;; Request token retrieval failed!&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;Timestamp&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Is your system clock up to date? See the FAQ on our wiki: &#39;</span>
+                 <span class="s">&#39;http://code.google.com/p/googlecl/wiki/FAQ&#39;</span>
+                 <span class="s">&#39;#Timestamp_too_far_from_current_time&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="n">auth_params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;hd&#39;</span><span class="p">:</span> <span class="n">domain</span><span class="p">}</span>
+    <span class="n">auth_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GenerateOAuthAuthorizationURL</span><span class="p">(</span><span class="n">request_token</span><span class="o">=</span><span class="n">request_token</span><span class="p">,</span>
+                                                  <span class="n">extra_params</span><span class="o">=</span><span class="n">auth_params</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">browser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">browser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">auth_url</span><span class="p">))</span>
+      <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Blanket catch of Exception is a bad idea, but don't want to pass in
+error to look for.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Failed to launch web browser: &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Please log in and/or grant access via your browser at: </span><span class="se">\n</span><span class="si">%s</span><span class="se">\n\n</span><span class="s">&#39;</span>
+               <span class="s">&#39;Then, in this terminal, hit enter. &#39;</span> <span class="o">%</span> <span class="n">auth_url</span><span class="p">)</span>
+    <span class="nb">raw_input</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>This upgrades the token, and if successful, sets the access token</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">UpgradeToOAuthAccessToken</span><span class="p">(</span><span class="n">request_token</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">gdata</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">TokenUpgradeFailed</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Token upgrade failed! Could not get OAuth access token.&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+
+  <span class="n">RequestAccess</span> <span class="o">=</span> <span class="n">request_access</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

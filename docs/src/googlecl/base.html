@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>base.py</title>
+  <link rel="stylesheet" href="../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>base.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Basic abilities that all GoogleCL clients have.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">time</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Renamed here to reduce verbosity in other sections</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">safe_encode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_encode</span>
+<span class="n">safe_decode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_decode</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">HTTP_ERROR_CODES_TO_RETRY_ON</span> <span class="o">=</span> <span class="p">[</span><span class="mi">302</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">503</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Base error for GoogleCL exceptions.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>This class CANNOT be used unless an instance also inherits from
+either gdata.client.GDClient or gdata.service.GDataService somehow.
+TODO: pylint bugs out over the missing functions/attributes here,
+but there are no run-time errors. Make pylint happy!
+Extension of gdata.GDataService specific to GoogleCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">BaseCL</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Subclass of Exception to catch when there is a request error.
+Should be one of gdata.service.RequestError or gdata.client.RequestError</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">request_error</span> <span class="o">=</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Set some basic attributes common to all instances.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">request_error_class</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Args:
+  section: Section of the config file that options will be found under.
+  config: Configuration parser.
+  request_error_class: Exception class raised when a request fails.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span> <span class="o">=</span> <span class="n">request_error_class</span>
+    <span class="n">large_max_results</span> <span class="o">=</span> <span class="mi">10000</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Because each new xxxServiceCL class should use the more specific
+superclass's <strong>init</strong> function, don't define one here.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="s">&#39;GoogleCL&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">client_id</span> <span class="o">=</span> <span class="s">&#39;GoogleCL&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Some new attributes, not inherited.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">use_regex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                          <span class="s">&#39;regex&#39;</span><span class="p">,</span>
+                                          <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                          <span class="n">option_type</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cap_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                            <span class="s">&#39;cap_results&#39;</span><span class="p">,</span>
+                                            <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                            <span class="n">option_type</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                            <span class="s">&#39;max_results&#39;</span><span class="p">,</span>
+                                            <span class="n">default</span><span class="o">=</span><span class="n">large_max_results</span><span class="p">,</span>
+                                            <span class="n">option_type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                            <span class="s">&#39;max_retries&#39;</span><span class="p">,</span>
+                                            <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="n">option_type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">retry_delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span>
+                                            <span class="s">&#39;retry_delay&#39;</span><span class="p">,</span>
+                                            <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                            <span class="n">option_type</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">service_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_service</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+      <span class="n">service_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">service_name</span> <span class="o">!=</span> <span class="s">&#39;youtube&#39;</span> <span class="ow">and</span>
+        <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cap_results</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span> <span class="o">&lt;</span> <span class="n">large_max_results</span><span class="p">)):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;You are requesting only &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="s">&#39; results per query -- this may be slow&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Extends Delete to handle a list of entries.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">delete_entry_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">entry_type</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span>
+                        <span class="n">callback</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Keyword arguments:
+  entries: List of entries to delete.
+  entry_type: String describing the thing being deleted (e.g. album, post).
+  prompt: Whether or not the user should be prompted to confirm deletion.
+  callback: function which takes entry as an argument and deletes it</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+      <span class="n">prompt_message</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Are you SURE you want to delete </span><span class="si">%s</span><span class="s"> &quot;</span><span class="si">%s</span><span class="s">&quot;? (y/N): &#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">entry_type</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+        <span class="n">delete_str</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="n">prompt_message</span> <span class="o">%</span> <span class="n">safe_encode</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">delete_str</span><span class="p">:</span>
+          <span class="n">delete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">delete</span> <span class="o">=</span> <span class="n">delete_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;y&#39;</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">delete</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="k">if</span> <span class="n">delete</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">callback</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>if callback is provided then deletion is done by calling it</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">callback</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+          <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Later versions are defined with lowercase function names.
+These versions take GDataEntry objects, older takes the edit link.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">):</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">GetEditLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span>
+        <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Could not delete &#39;</span> <span class="o">+</span> <span class="n">entry_type</span> <span class="o">+</span> <span class="s">&#39;: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+
+  <span class="n">DeleteEntryList</span> <span class="o">=</span> <span class="n">delete_entry_list</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>XXX: This should be shortened. test simpler version with client and service.
+Get the email address that has the OAuth access token.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uri</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">redirects_remaining</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Uses the "Email address" scope to return the email address the user
+was logged in as when he/she authorized the OAuth request token.</p>
+<p>Keyword arguments:
+  uri: Uri to get data from. Should only be used for redirects.</p>
+<p>Returns:
+  Full email address ('schmoe@domain.wtf') of the account with access.</p>
+<p>Use request instead of Get to avoid the attempts to parse from xml.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">server_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;GET&#39;</span><span class="p">,</span>
+                           <span class="n">_uri</span> <span class="ow">or</span> <span class="s">&#39;https://www.googleapis.com/userinfo/email&#39;</span><span class="p">)</span>
+    <span class="n">result_body</span> <span class="o">=</span> <span class="n">server_response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">server_response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">urlparse</span> <span class="kn">import</span> <span class="n">parse_qs</span>
+        <span class="n">parse_func</span> <span class="o">=</span> <span class="n">parse_qs</span>
+      <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>parse_qs was moved to urlparse from cgi in python2.6</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="kn">import</span> <span class="nn">cgi</span>
+        <span class="n">parse_func</span> <span class="o">=</span> <span class="n">cgi</span><span class="o">.</span><span class="n">parse_qs</span>
+      <span class="n">param_dict</span> <span class="o">=</span> <span class="n">parse_func</span><span class="p">(</span><span class="n">result_body</span><span class="p">)</span>
+      <span class="n">email</span> <span class="o">=</span> <span class="n">param_dict</span><span class="p">[</span><span class="s">&#39;email&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>This block copied (with some modification) from GDataService (2.0.10)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">elif</span> <span class="n">server_response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">302</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">redirects_remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="p">(</span><span class="n">server_response</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="s">&#39;Location&#39;</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="n">server_response</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="s">&#39;location&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">location</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">BaseServiceCL</span><span class="o">.</span><span class="n">get_email</span><span class="p">(</span><span class="n">location</span><span class="p">,</span>
+                                      <span class="n">redirects_remaining</span><span class="o">=</span><span class="n">redirects_remaining</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;status&#39;</span><span class="p">:</span> <span class="n">server_response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="s">&#39;reason&#39;</span><span class="p">:</span> <span class="s">&#39;302 received without Location header&#39;</span><span class="p">,</span>
+                <span class="s">&#39;body&#39;</span><span class="p">:</span> <span class="n">result_body</span><span class="p">}</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;status&#39;</span><span class="p">:</span> <span class="n">server_response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+              <span class="s">&#39;reason&#39;</span><span class="p">:</span> <span class="s">&#39;Redirect received, but redirects_remaining &lt;= 0&#39;</span><span class="p">,</span>
+              <span class="s">&#39;body&#39;</span><span class="p">:</span> <span class="n">result_body</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;status&#39;</span><span class="p">:</span> <span class="n">server_response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="s">&#39;reason&#39;</span><span class="p">:</span> <span class="n">server_response</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">:</span> <span class="n">result_body</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">email</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Get a list of entries from a feed uri.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_entries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">titles</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">desired_class</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Keyword arguments:
+  uri: URI to get the feed from.
+  titles: string or list What to look for in entry.title.text.
+          Default None for all entries from feed.
+  converter: Converter to use on the feed. If specified, will be passed
+             into the GetFeed method. If both converter and
+             desired_class are None, GetFeed is called without those
+             arguments.
+  desired_class: class descended from atom.core.XmlElement to which a
+                 successful response should be converted. If converter=None,
+                 then the desired_class will be used in calling the
+                 atom.core.parse function. If both converter and
+                 desired_class are None, GetFeed is called without those
+                 arguments.
+Returns:
+  List of entries.</p>
+<p>XXX: Should probably go through all code and make sure title can only be
+NoneType or list, not also maybe a string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">uri</span> <span class="o">=</span> <span class="n">set_max_results</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+      <span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">feed</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">converter</span> <span class="ow">or</span> <span class="n">desired_class</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>desired_class param not available for GDataService,
+only GDClient.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">try</span><span class="p">:</span>
+          <span class="n">feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetFeed</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">converter</span><span class="p">,</span>
+                              <span class="n">desired_class</span><span class="o">=</span><span class="n">desired_class</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">converter</span><span class="p">:</span>
+            <span class="n">feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetFeed</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">converter</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">feed</span><span class="p">:</span>
+        <span class="n">feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetFeed</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+    <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">error_string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Failed to get entries: &#39;</span> <span class="o">+</span> <span class="n">error_string</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Attempt to catch older gdata users and warn them when they try to upload
+unsupported file types</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="s">&quot;403.4 SSL required&quot;</span> <span class="ow">in</span> <span class="n">error_string</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">If you are trying upload to Google Docs, your version of &quot;</span>
+        <span class="k">print</span> <span class="s">&quot;python-gdata may not support this action. Please see this wiki page &quot;</span>
+        <span class="k">print</span> <span class="s">&quot;for more details:&quot;</span> 
+        <span class="k">print</span> <span class="s">&quot;http://code.google.com/p/googlecl/wiki/UploadingGoogleDocs</span><span class="se">\n\n</span><span class="s">&quot;</span>
+      <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">all_entries</span> <span class="o">=</span> <span class="n">feed</span><span class="o">.</span><span class="n">entry</span>
+    <span class="k">if</span> <span class="n">feed</span><span class="o">.</span><span class="n">GetNextLink</span><span class="p">():</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cap_results</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Leaving data that matches query on server.&#39;</span> <span class="o">+</span>
+                    <span class="s">&#39; Increase max_results or set cap_results to False.&#39;</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">feed</span> <span class="ow">and</span> <span class="n">feed</span><span class="o">.</span><span class="n">GetNextLink</span><span class="p">():</span>
+          <span class="n">feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetNext</span><span class="p">(</span><span class="n">feed</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">feed</span><span class="p">:</span>
+            <span class="n">all_entries</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">feed</span><span class="o">.</span><span class="n">entry</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Check if title is NoneType, empty string, empty list, or a single-item
+list containing any of the prior.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">titles</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">titles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">titles</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Retrieved &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_entries</span><span class="p">))</span> <span class="o">+</span>
+                <span class="s">&#39; entries, returning them all&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">all_entries</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_regex</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Carefully build title regex.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">titles</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="n">title_regex</span> <span class="o">=</span> <span class="n">titles</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">title_regex</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="s">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">titles</span><span class="p">))</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Using regex: &#39;</span> <span class="o">+</span> <span class="n">title_regex</span><span class="p">))</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">all_entries</span>
+                   <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="ow">and</span>
+                   <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">title_regex</span><span class="p">,</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">))]</span>
+      <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Regular expression error: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;!&#39;</span><span class="p">)</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">titles</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">title_list</span> <span class="o">=</span> <span class="n">titles</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">title_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">titles</span><span class="p">]</span>
+      <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">all_entries</span>
+                 <span class="k">if</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="ow">in</span> <span class="n">title_list</span><span class="p">]</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Retrieved &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_entries</span><span class="p">))</span> <span class="o">+</span>
+              <span class="s">&#39; entries, returning &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span> <span class="o">+</span> <span class="s">&#39; of them&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entries</span>
+
+  <span class="n">GetEntries</span> <span class="o">=</span> <span class="n">get_entries</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>Return exactly one entry.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_single_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri_or_entry_list</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">desired_class</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Uses GetEntries to retrieve the entries, then asks the user to select one of
+them by entering a number.</p>
+<p>Keyword arguments:
+  uri_or_entry_list: URI to get feed from (See get_entries) or list of
+                     entries to select from.
+  title: string Title to match on. See get_entries. Default None.
+  converter: Conversion function to apply to feed. See get_entries.
+  desired_class: class to which a successful response should be converted.
+                 See get_entries.</p>
+<p>Returns:
+  None if there were no matches, or one entry matching the given title.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">uri_or_entry_list</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri_or_entry_list</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">entries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_entries</span><span class="p">(</span><span class="n">uri_or_entry_list</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">converter</span><span class="p">,</span>
+                                 <span class="n">desired_class</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri_or_entry_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="n">entries</span> <span class="o">=</span> <span class="n">uri_or_entry_list</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;Got unexpected type for uri_or_entry_list!&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">print</span> <span class="s">&#39;More than one match for title &#39;</span> <span class="o">+</span> <span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%i</span><span class="s">) </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+      <span class="n">selection</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+      <span class="k">while</span> <span class="n">selection</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">selection</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">selection</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">raw_input</span><span class="p">(</span><span class="s">&#39;Please select one of the items by number: &#39;</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">entries</span><span class="p">[</span><span class="n">selection</span><span class="p">]</span>
+
+  <span class="n">GetSingleEntry</span> <span class="o">=</span> <span class="n">get_single_entry</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Check that the token being used is valid.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">is_token_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_uri</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>Keyword arguments:
+  test_uri: URI to pass to self.Get(). Default None (raises error).</p>
+<p>Returns:
+  True if Get was successful, False if Get raised an exception with the
+  string 'Token invalid' in its body, and raises any other exceptions.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">test_uri</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;No uri to test token with!&#39;</span> <span class="o">+</span>
+                  <span class="s">&#39;(was is_token_valid extended?)&#39;</span><span class="p">)</span>
+    <span class="n">test_uri</span> <span class="o">=</span> <span class="n">set_max_results</span><span class="p">(</span><span class="n">test_uri</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>Try to limit the number of results we get.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="bp">self</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="n">test_uri</span><span class="p">)</span>
+    <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Token invalid! &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+
+  <span class="n">IsTokenValid</span> <span class="o">=</span> <span class="n">is_token_valid</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">request_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">display_name</span><span class="p">,</span> <span class="n">scopes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">browser</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;request_access must be defined!&#39;</span><span class="p">)</span>
+  <span class="n">RequestAccess</span> <span class="o">=</span> <span class="n">request_access</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      <p>Retries an operation if certain status codes are returned.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">retry_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>Wraps self.original_operation in a try block for catching request errors.
+self.original_operation should be an alias to the original method being
+attempted. See BaseServiceCL.retry_(get/post/delete).</p>
+<p>Args:
+  <em>args: The </em>args passed to the operation being attempted.
+  <strong>kwargs: The </strong>kwargs passed to the operation being attempted.</p>
+<p>Returns:
+  Results from original operation being attempted.</p>
+<p>Raises:
+  Exception: On exception from original operation. Certain RequestErrors
+  will be caught, and the original operation attempted again, if enough
+  retries remain (set by self.max_retries)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">try_forever</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="n">attempts_remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">while</span> <span class="n">try_forever</span> <span class="ow">or</span> <span class="n">attempts_remaining</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_operation</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+      <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      <p>RequestError defined in gdata.client</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>          <span class="n">status_code</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">status</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      <p>RequestError defined in gdata.service (and raised by GDataService)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>          <span class="n">status_code</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;status&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">status_code</span> <span class="ow">in</span> <span class="n">HTTP_ERROR_CODES_TO_RETRY_ON</span><span class="p">:</span>
+          <span class="n">attempts_remaining</span> <span class="o">-=</span> <span class="mi">1</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Retrying when you would have failed otherwise!&#39;</span><span class="p">)</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Arguments: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Keyword arguments: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kwargs</span><span class="p">)</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Error: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">err</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">try_forever</span> <span class="ow">or</span> <span class="n">attempts_remaining</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retry_delay</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">err</span>
+      <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">unexpected</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;unexpected exception: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">unexpected</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Arguments: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Keyword arguments: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">unexpected</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-35'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-35'>#</a>
+      </div>
+      <p>Can only leave above loop if err is set at least once.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">raise</span> <span class="n">err</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-36'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-36'>#</a>
+      </div>
+      <p>Set max-results parameter if it is not set already.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">set_max_results</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="nb">max</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-37'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-37'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">max_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">max</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;?&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">uri</span> <span class="o">+</span> <span class="s">&#39;?max-results=&#39;</span> <span class="o">+</span> <span class="n">max_str</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;max-results&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">uri</span> <span class="o">+</span> <span class="s">&#39;&amp;max-results=&#39;</span> <span class="o">+</span> <span class="n">max_str</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">uri</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-38'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-38'>#</a>
+      </div>
+      <p>The use of login_required has been deprecated - all tasks now require
+logging in, and google.py does not check whether or not a task
+says otherwise.
+A container of requirements.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-39'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-39'>#</a>
+      </div>
+      <p>Each requirement matches up with one of the attributes of the option parser
+used to parse command line arguments. Requirements are given as lists.
+For example, if a task needs to have attr1 and attr2 and either attr3 or 4,
+the list would look like ['attr1', 'attr2', ['attr3', 'attr4']]</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-40'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-40'>#</a>
+      </div>
+      <p>Constructor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="p">[],</span> <span class="n">optional</span><span class="o">=</span><span class="p">[],</span>
+               <span class="n">login_required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">args_desc</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-41'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-41'>#</a>
+      </div>
+      <p>Keyword arguments:
+  description: Description of what the task does.
+  callback: Function to use to execute task.
+            (Default None, prints a message instead of running)
+  required: Required options for the task. (Default None)
+  optional: Optional options for the task. (Default None)
+  login_required: If logging in with a username is required to do this task.
+            If True, can typically ignore 'user' as a required attribute.
+            (Default True)
+  args_desc: Description of what the arguments should be.
+             (Default '', for no arguments necessary for this task)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">required</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="n">required</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optional</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">optional</span> <span class="o">=</span> <span class="p">[</span><span class="n">optional</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">callback</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_not_impl</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="n">required</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">optional</span> <span class="o">=</span> <span class="n">optional</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">login_required</span> <span class="o">=</span> <span class="n">login_required</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-42'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-42'>#</a>
+      </div>
+      <p>Take the "required" list, join all the terms by the following rules:
+1) if the term is a string, leave it.
+2) if the term is a list, join it with the ' OR ' string.
+Then join the resulting list with ' AND '.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+      <span class="n">req_str</span> <span class="o">=</span> <span class="s">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;(&#39;</span><span class="o">+</span><span class="s">&#39; OR &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;)&#39;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> \
+                              <span class="k">else</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">req_str</span> <span class="o">=</span> <span class="s">&#39;none&#39;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optional</span><span class="p">:</span>
+      <span class="n">opt_str</span> <span class="o">=</span> <span class="s">&#39; Optional: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optional</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">opt_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">args_desc</span><span class="p">:</span>
+      <span class="n">args_desc</span> <span class="o">=</span> <span class="s">&#39; Arguments: &#39;</span> <span class="o">+</span> <span class="n">args_desc</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">usage</span> <span class="o">=</span> <span class="s">&#39;Requires: &#39;</span> <span class="o">+</span> <span class="n">req_str</span> <span class="o">+</span> <span class="n">opt_str</span> <span class="o">+</span> <span class="n">args_desc</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-43'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-43'>#</a>
+      </div>
+      <p>Return a list of required options that are missing.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_outstanding_requirements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-44'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-44'>#</a>
+      </div>
+      <p>The requirements that have been specified in <options> are removed
+from self.required, and any sublists in self.required have been replaced
+by the first item in that sublist if none of the requirements in the
+sublist were given.</p>
+<p>Args:
+  options: instance Has attributes with names corresponding to the
+           requirements specified by self.required and self.optional</p>
+<p>Returns:
+  A subset of self.required containing only strings representing unmet
+  requirements.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">missing_options_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">attr</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+                              <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span>
+                              <span class="nb">getattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">missing_requirements</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">requirement</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">sub_req_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">requirement</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-45'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-45'>#</a>
+      </div>
+      <p>If every element in sub_req_set is in missing_options_set,
+add the first element of the requirements list to the missing
+requirements.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">if</span> <span class="n">sub_req_set</span> <span class="o">&lt;=</span> <span class="n">missing_options_set</span><span class="p">:</span>
+          <span class="n">missing_requirements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">requirement</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-46'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-46'>#</a>
+      </div>
+      <p>Otherwise, the user specified one of the elements of the list, so
+we can use that one.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">elif</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="n">missing_options_set</span><span class="p">:</span>
+        <span class="n">missing_requirements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">requirement</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">missing_requirements</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-47'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-47'>#</a>
+      </div>
+      <p>See if an attribute is optional</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">is_optional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-48'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-48'>#</a>
+      </div>
+      <p>No list of lists in the optional fields</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optional</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-49'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-49'>#</a>
+      </div>
+      <p>Just use this as a place-holder for Task callbacks.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_not_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-50'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-50'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Sorry, this task is not yet implemented!&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-51'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-51'>#</a>
+      </div>
+      <p>Wraps GDataEntries to easily get human-readable data.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">BaseEntryToStringWrapper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-52'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-52'>#</a>
+      </div>
+      <p>Constructor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gdata_entry</span><span class="p">,</span>
+               <span class="n">intra_property_delimiter</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+               <span class="n">label_delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span>
+               <span class="n">default_url_field</span><span class="o">=</span><span class="s">&#39;site&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-53'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-53'>#</a>
+      </div>
+      <p>Keyword arguments:
+  gdata_entry: The GDataEntry to extract data from.
+  intra_property_delimiter: Delimiter to distinguish between multiple
+               values in a single property (e.g. multiple email addresses).
+               Default '' (there will always be at least one space).
+  label_delimiter: String to place in front of a label for intra-property
+                   values. For example, for a contact with multiple phone
+                   numbers, ':' would yield "Work:<number> Home:<number>"
+                   Default ' ' (there is no whitespace between label and
+                   value if it is not specified).
+                   Set as NoneType to omit labels entirely.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="bp">self</span><span class="o">.</span><span class="n">entry</span> <span class="o">=</span> <span class="n">gdata_entry</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">intra_property_delimiter</span> <span class="o">=</span> <span class="n">intra_property_delimiter</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">label_delimiter</span> <span class="o">=</span> <span class="n">label_delimiter</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_url_field</span> <span class="o">=</span> <span class="n">default_url_field</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-54'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-54'>#</a>
+      </div>
+      <p>dir(self.entry).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-55'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-55'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-56'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-56'>#</a>
+      </div>
+      <p>Title or name. For Contacts v1, job title.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-57'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-57'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+  <span class="n">name</span> <span class="o">=</span> <span class="n">title</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-58'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-58'>#</a>
+      </div>
+      <p>url_direct or url_site, depending on url_field defined in config.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-59'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-59'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_url_field</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-60'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-60'>#</a>
+      </div>
+      <p>Url that leads directly to content.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">url_direct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-61'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-61'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">(</span><span class="s">&#39;direct&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-62'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-62'>#</a>
+      </div>
+      <p>Url that leads to site hosting content.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">url_site</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-63'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-63'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">(</span><span class="s">&#39;site&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-64'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-64'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subfield</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">GetHtmlLink</span><span class="p">():</span>
+      <span class="n">href</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">href</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">GetHtmlLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span>
+
+    <span class="k">if</span> <span class="n">subfield</span> <span class="o">==</span> <span class="s">&#39;direct&#39;</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">src</span> <span class="ow">or</span> <span class="n">href</span>
+    <span class="k">return</span> <span class="n">href</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">src</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-65'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-65'>#</a>
+      </div>
+      <p>Summary or description.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-66'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-66'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-67'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-67'>#</a>
+      </div>
+      <p>Try to access the "default" description</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-68'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-68'>#</a>
+      </div>
+      <p>If it's not there, try the summary attribute</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-69'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-69'>#</a>
+      </div>
+      <p>If the "default" description was there, but it was empty,
+try the summary attribute.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">return</span> <span class="n">value</span>
+  <span class="n">description</span> <span class="o">=</span> <span class="n">summary</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-70'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-70'>#</a>
+      </div>
+      <p>Raw XML.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">xml</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-71'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-71'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-72'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-72'>#</a>
+      </div>
+      <p>Determine the human-readable label of the item.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_extract_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_list_item</span><span class="p">,</span> <span class="n">label_attr</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-73'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-73'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">label_attr</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">entry_list_item</span><span class="p">,</span> <span class="n">label_attr</span><span class="p">):</span>
+      <span class="n">scheme_or_label</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entry_list_item</span><span class="p">,</span> <span class="n">label_attr</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">entry_list_item</span><span class="p">,</span> <span class="s">&#39;rel&#39;</span><span class="p">):</span>
+      <span class="n">scheme_or_label</span> <span class="o">=</span> <span class="n">entry_list_item</span><span class="o">.</span><span class="n">rel</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">entry_list_item</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">):</span>
+      <span class="n">scheme_or_label</span> <span class="o">=</span> <span class="n">entry_list_item</span><span class="o">.</span><span class="n">label</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">scheme_or_label</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">scheme_or_label</span><span class="p">[</span><span class="n">scheme_or_label</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;#&#39;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-74'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-74'>#</a>
+      </div>
+      <p>Join a list of entries into a string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_list</span><span class="p">,</span> <span class="n">text_attribute</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">,</span>
+            <span class="n">text_extractor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">label_attribute</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-75'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-75'>#</a>
+      </div>
+      <p>Keyword arguments:
+  entry_list: List of entries to be joined.
+  text_attribute: String of the attribute that will give human readable
+                  text for each entry in entry_list. Default 'text'.
+  text_extractor: Function that can be used to get desired text.
+                  Default None. Use this if the readable data is buried
+                  deeper than a single attribute.
+  label_attribute: If the attribute for the label is not 'rel' or 'label'
+                   it can be specified here.</p>
+<p>Returns:
+  String from joining the items in entry_list.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">text_extractor</span><span class="p">:</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">text_attribute</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Error</span><span class="p">(</span><span class="s">&#39;One of &quot;text_extractor&quot; or &#39;</span> <span class="o">+</span>
+                    <span class="s">&#39;&quot;text_attribute&quot; must be defined!&#39;</span><span class="p">)</span>
+      <span class="n">text_extractor</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">text_attribute</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-76'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-76'>#</a>
+      </div>
+      <p>It should be impossible to get a non-string from text_extractor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">text_extractor</span><span class="p">(</span><span class="n">entry_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_delimiter</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_property_delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">text_extractor</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                                                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entry_list</span>
+                                                 <span class="k">if</span> <span class="n">text_extractor</span><span class="p">(</span><span class="n">e</span><span class="p">)])</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">separating_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_property_delimiter</span> <span class="o">+</span> <span class="s">&#39; &#39;</span>
+      <span class="n">joined_string</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+      <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entry_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_delimiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+          <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_label</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">label_attr</span><span class="o">=</span><span class="n">label_attribute</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+            <span class="n">joined_string</span> <span class="o">+=</span> <span class="n">label</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_delimiter</span>
+        <span class="n">joined_string</span> <span class="o">+=</span> <span class="n">text_extractor</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="o">+</span> <span class="n">separating_string</span>
+      <span class="k">return</span> <span class="n">joined_string</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">separating_string</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-77'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-77'>#</a>
+      </div>
+      <p>Return a useful string describing a gdata.data.GDEntry.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">compile_entry_string</span><span class="p">(</span><span class="n">wrapped_entry</span><span class="p">,</span> <span class="n">attribute_list</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">,</span>
+                         <span class="n">missing_field_value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">newline_replacer</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-78'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-78'>#</a>
+      </div>
+      <p>Keyword arguments:
+  wrapped_entry: BaseEntryToStringWrapper or subclass to display.
+  attribute_list: List of attributes to access
+  delimiter: String to use as the delimiter between attributes.
+  missing_field_value: If any of the fields for any of the entries are
+                       invalid or undefined, put this in its place
+                       (Default None to use "missing_field_value" config
+                       option).
+  newline_replacer: String to replace newlines with. Default ' '. Set to
+                    NoneType to leave newlines in place.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">return_string</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">delimiter</span><span class="p">:</span>
+    <span class="n">delimiter</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span>
+  <span class="k">if</span> <span class="n">delimiter</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;,&#39;</span><span class="p">:</span>
+    <span class="n">wrapped_entry</span><span class="o">.</span><span class="n">intra_property_delimiter</span> <span class="o">=</span> <span class="s">&#39;;&#39;</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">wrapped_entry</span><span class="o">.</span><span class="n">intra_property_delimiter</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span>
+  <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attribute_list</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-79'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-79'>#</a>
+      </div>
+      <p>Get the value, replacing NoneTypes and empty strings
+with the missing field value.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">wrapped_entry</span><span class="p">,</span> <span class="n">attr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span><span class="s">&#39;_&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">missing_field_value</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; (Did not add value for field &#39;</span> <span class="o">+</span> <span class="n">attr</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; (value for field &#39;</span> <span class="o">+</span> <span class="n">attr</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span><span class="p">)</span>
+      <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-80'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-80'>#</a>
+      </div>
+      <p>Last ditch effort to blindly grab the attribute</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">wrapped_entry</span><span class="o">.</span><span class="n">entry</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="n">missing_field_value</span>
+      <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; (value for field &#39;</span> <span class="o">+</span> <span class="n">attr</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">missing_field_value</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-81'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-81'>#</a>
+      </div>
+      <p>Apparently, atom(?) doesn't always return a Unicode type when there are
+non-latin characters, so force everything to Unicode.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">val</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-82'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-82'>#</a>
+      </div>
+      <p>Ensure the delimiter won't appear in a non-delineation role,
+but let it slide if the raw xml is being dumped</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s">&#39;xml&#39;</span><span class="p">:</span>
+      <span class="n">return_string</span> <span class="o">+=</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">delimiter</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">delimiter</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">return_string</span> <span class="o">=</span> <span class="n">val</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-83'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-83'>#</a>
+      </div>
+      <p>Don't do processing if attribute is xml</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s">&#39;xml&#39;</span><span class="p">:</span>
+      <span class="n">return_string</span> <span class="o">=</span> <span class="n">return_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">newline_replacer</span><span class="p">)</span>
+
+  <span class="n">return_string</span> <span class="o">=</span> <span class="n">return_string</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">delimiter</span><span class="p">)</span>
+  <span class="n">return_string</span> <span class="o">=</span> <span class="n">return_string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">TERMINAL_ENCODING</span><span class="p">,</span>
+                                       <span class="s">&#39;backslashreplace&#39;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">return_string</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-84'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-84'>#</a>
+      </div>
+      <p>Generate sets of tags based on a string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">generate_tag_sets</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-85'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-85'>#</a>
+      </div>
+      <p>Keyword arguments:
+  tags: Comma-separated list of tags. Tags with a '-' in front will be
+        removed from each photo. A tag of '--' will delete all tags.
+        A backslash in front of a '-' will keep the '-' in the tag.
+        Examples:
+          'tag1, tag2, tag3'      Add tag1, tag2, and tag3
+          '-tag1, tag4, -tag5'   Remove tag1, add tag4 and -tag5
+          '--, tag6'              Remove all tags, then add tag6
+Returns:
+  (remove_set, add_set, replace_tags) where...
+    remove_set: set object of the tags to remove
+    add_set: set object of the tags to add
+    replace_tags: boolean indicating if all the old tags are removed</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="p">)</span>
+  <span class="n">tagset</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tags</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">))</span>
+  <span class="n">remove_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tag</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tagset</span> <span class="k">if</span> <span class="n">tag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="s">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">remove_set</span><span class="p">:</span>
+    <span class="n">replace_tags</span> <span class="o">=</span> <span class="bp">True</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">replace_tags</span> <span class="o">=</span> <span class="bp">False</span>
+  <span class="n">add_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remove_set</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tagset</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-86'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-86'>#</a>
+      </div>
+      <p>TODO: Can do this more cleanly with regular expressions?</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tagset</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-87'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-87'>#</a>
+      </div>
+      <p>Remove the escape '\' for calculation of 'add' set</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="n">tag</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;\-&#39;</span><span class="p">:</span>
+        <span class="n">add_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tag</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-88'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-88'>#</a>
+      </div>
+      <p>Don't add the tags that are being removed</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">elif</span> <span class="n">tag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;-&#39;</span><span class="p">:</span>
+        <span class="n">add_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">remove_set</span><span class="p">,</span> <span class="n">add_set</span><span class="p">,</span> <span class="n">replace_tags</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

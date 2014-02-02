@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>__init__.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>__init__.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Data for GoogleCL's calendar service.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">import</span> <span class="nn">googlecl.base</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">googlecl.calendar.date</span> <span class="kn">import</span> <span class="n">DateRangeParser</span>
+
+<span class="n">service_name</span> <span class="o">=</span> <span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">LOGGER_NAME</span> <span class="o">=</span> <span class="n">__name__</span>
+<span class="n">SECTION_HEADER</span> <span class="o">=</span> <span class="n">service_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">LOGGER_NAME</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Rename to reduce verbosity</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">safe_encode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_encode</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">condense_recurring_events</span><span class="p">(</span><span class="n">events</span><span class="p">):</span>
+  <span class="n">seen_ids</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="n">combined_events</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&quot;looking at event </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_ids</span><span class="p">:</span>
+      <span class="n">seen_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+      <span class="n">combined_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">combined_events</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Convert reminder string to minutes integer.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">convert_reminder_string</span><span class="p">(</span><span class="n">reminder</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Keyword arguments:
+  reminder: String representation of time,
+            e.g. '10' for 10 minutes,
+                 '1d' for one day,
+                 '3h' for three hours, etc.
+Returns:
+  Integer of reminder converted to minutes.</p>
+<p>Raises:
+  ValueError if conversion failed.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">reminder</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">None</span>
+  <span class="n">unit</span> <span class="o">=</span> <span class="n">reminder</span><span class="o">.</span><span class="n">lower</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+  <span class="n">value</span> <span class="o">=</span> <span class="n">reminder</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+  <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s">&#39;s&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span>
+  <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s">&#39;m&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s">&#39;h&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span>
+  <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s">&#39;d&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span>
+  <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s">&#39;w&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">7</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">reminder</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">filter_recurring_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">recurrences_expanded</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">recurrences_expanded</span><span class="p">:</span>
+    <span class="n">is_recurring</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">event</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">original_event</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">is_recurring</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">event</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">recurrence</span>
+  <span class="k">return</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_recurring</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">filter_single_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">recurrences_expanded</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">recurrences_expanded</span><span class="p">:</span>
+    <span class="n">is_single</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">event</span><span class="p">:</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">original_event</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">is_single</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">event</span><span class="p">:</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">recurrence</span>
+  <span class="k">return</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_single</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">filter_all_day_events_outside_range</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">start_date</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">start_date</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span>
+      <span class="n">start_datetime</span> <span class="o">=</span> <span class="n">start_date</span><span class="o">.</span><span class="n">local</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">start_datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">start_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                                         <span class="n">month</span><span class="o">=</span><span class="n">start_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                                         <span class="n">day</span><span class="o">=</span><span class="n">start_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">end_date</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">end_date</span><span class="o">.</span><span class="n">all_day</span><span class="p">:</span>
+      <span class="n">inclusive_end_datetime</span> <span class="o">=</span> <span class="n">end_date</span><span class="o">.</span><span class="n">local</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">end_datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">end_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                                       <span class="n">month</span><span class="o">=</span><span class="n">end_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                                       <span class="n">day</span><span class="o">=</span><span class="n">end_date</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+  <span class="n">new_events</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_time</span><span class="p">,</span> <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+      <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span> <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;unconverted data remains&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">err</span>
+      <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Errors that complain of unconverted data are events with duration</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">new_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="p">((</span><span class="ow">not</span> <span class="n">start_date</span> <span class="ow">or</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">start_datetime</span><span class="p">)</span> <span class="ow">and</span>
+          <span class="p">(</span><span class="ow">not</span> <span class="n">end_date</span> <span class="ow">or</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">inclusive_end_datetime</span><span class="p">)):</span>
+        <span class="n">new_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">recurrence</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>While writing the below comment, I was 90% sure it was true. Testing
+this case, however, showed that things worked out just fine -- the
+events were filtered out. I must have misunderstood the "when" data.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>The tricky case: an Event that describes a recurring all-day event.
+In the rare case that:
+NO recurrences occur in the given range AND AT LEAST ONE recurrence
+occurs just outside the given range (AND it's an all-day recurrence),
+we will incorrectly return this event.
+This is unavoidable unless we a) perform another query or b)
+incorporate a recurrence parser.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">new_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">new_events</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">filter_canceled_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">recurrences_expanded</span><span class="p">):</span>
+  <span class="n">AT_LEAST_ONE_EVENT</span> <span class="o">=</span> <span class="s">&#39;not dead yet!&#39;</span>
+  <span class="n">canceled_recurring_events</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="n">ongoing_events</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="n">is_canceled</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">event_status</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s">&#39;CANCELED&#39;</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">when</span>
+
+  <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&#39;looking at event </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">if</span> <span class="n">recurrences_expanded</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;event is original: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">status</span> <span class="o">=</span> <span class="n">canceled_recurring_events</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+          <span class="n">status</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">is_canceled</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="ow">and</span> <span class="n">status</span> <span class="o">!=</span> <span class="n">AT_LEAST_ONE_EVENT</span><span class="p">:</span>
+          <span class="k">print</span> <span class="s">&#39;adding event to canceled: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+          <span class="n">canceled_recurring_events</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_canceled</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+          <span class="k">print</span> <span class="s">&#39;at least one more of: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span>
+          <span class="n">canceled_recurring_events</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">=</span> <span class="n">AT_LEAST_ONE_EVENT</span>
+      <span class="n">ongoing_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>If recurrences have not been expanded, we can't tell if they were
+canceled or not.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_canceled</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+      <span class="n">ongoing_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+  <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">canceled_recurring_events</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">event</span> <span class="o">!=</span> <span class="n">AT_LEAST_ONE_EVENT</span><span class="p">:</span>
+      <span class="n">ongoing_events</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">ongoing_events</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Get datetime objects for the start and end of the event specified by a</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_datetimes</span><span class="p">(</span><span class="n">cal_entry</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>calendar entry.</p>
+<p>Keyword arguments:
+  cal_entry: A CalendarEventEntry.</p>
+<p>Returns:
+  (start_time, end_time, freq) where
+    start_time - datetime object of the start of the event.
+    end_time - datetime object of the end of the event.
+    freq - string that tells how often the event repeats (NoneType if the
+         event does not repeat (does not have a gd:recurrence element)).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">cal_entry</span><span class="o">.</span><span class="n">recurrence</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">parse_recurrence</span><span class="p">(</span><span class="n">cal_entry</span><span class="o">.</span><span class="n">recurrence</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">when</span> <span class="o">=</span> <span class="n">cal_entry</span><span class="o">.</span><span class="n">when</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Trim the string data from "when" to only include down to seconds</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">start_time_data</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">when</span><span class="o">.</span><span class="n">start_time</span><span class="p">[:</span><span class="mi">19</span><span class="p">],</span>
+                                      <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">T%H:%M:%S&#39;</span><span class="p">)</span>
+      <span class="n">end_time_data</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">when</span><span class="o">.</span><span class="n">end_time</span><span class="p">[:</span><span class="mi">19</span><span class="p">],</span>
+                                    <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">T%H:%M:%S&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Try to handle date format for all-day events</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">start_time_data</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">when</span><span class="o">.</span><span class="n">start_time</span><span class="p">,</span> <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+      <span class="n">end_time_data</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">when</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span> <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">start_time_data</span><span class="p">,</span> <span class="n">end_time_data</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Parse recurrence data found in event entry.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">parse_recurrence</span><span class="p">(</span><span class="n">time_string</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Keyword arguments:
+  time_string: Value of entry's recurrence.text field.</p>
+<p>Returns:
+  Tuple of (start_time, end_time, frequency). All values are in the user's
+  current timezone (I hope). start_time and end_time are datetime objects,
+  and frequency is a dictionary mapping RFC 2445 RRULE parameters to their
+  values. (http://www.ietf.org/rfc/rfc2445.txt, section 4.3.10)</p>
+<p>Google calendars uses a pretty limited section of RFC 2445, and I'm
+abusing that here. This will probably break if Google ever changes how
+they handle recurrence, or how the recurrence string is built.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">data</span> <span class="o">=</span> <span class="n">time_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+  <span class="n">start_time_string</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+  <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">start_time_string</span><span class="p">,</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">T%H%M%S&#39;</span><span class="p">)</span>
+
+  <span class="n">end_time_string</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+  <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">end_time_string</span><span class="p">,</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">T%H%M%S&#39;</span><span class="p">)</span>
+
+  <span class="n">freq_string</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">6</span><span class="p">:]</span>
+  <span class="n">freq_properties</span> <span class="o">=</span> <span class="n">freq_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;;&#39;</span><span class="p">)</span>
+  <span class="n">freq</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">freq_properties</span><span class="p">:</span>
+    <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;=&#39;</span><span class="p">)</span>
+    <span class="n">freq</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">CalendarEntryToStringWrapper</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseEntryToStringWrapper</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Initialize a CalendarEntry wrapper.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>Args:
+  entry: CalendarEntry to interpret to strings.
+  config: Configuration parser. Needed for some values.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseEntryToStringWrapper</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">config_parser</span> <span class="o">=</span> <span class="n">config</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>When event takes place.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">when</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">freq</span> <span class="o">=</span> <span class="n">get_datetimes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">print_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_parser</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">SECTION_HEADER</span><span class="p">,</span>
+                                                      <span class="s">&#39;date_print_format&#39;</span><span class="p">)</span>
+    <span class="n">start_text</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">print_format</span><span class="p">,</span> <span class="n">start_date</span><span class="p">)</span>
+    <span class="n">end_text</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">print_format</span><span class="p">,</span> <span class="n">end_date</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">start_text</span> <span class="o">+</span> <span class="s">&#39; - &#39;</span> <span class="o">+</span> <span class="n">end_text</span>
+    <span class="k">if</span> <span class="n">freq</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">freq</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s">&#39;BYDAY&#39;</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">+=</span> <span class="s">&#39; (&#39;</span> <span class="o">+</span> <span class="n">freq</span><span class="p">[</span><span class="s">&#39;BYDAY&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">+=</span> <span class="s">&#39; (&#39;</span> <span class="o">+</span> <span class="n">freq</span><span class="p">[</span><span class="s">&#39;FREQ&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span>
+    <span class="k">return</span> <span class="n">value</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Where event takes place</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">where</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">where</span><span class="p">,</span> <span class="n">text_attribute</span><span class="o">=</span><span class="s">&#39;value_string&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">cal_user_list</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_calendar_user_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">cal</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;No calendar matches &quot;&#39;</span> <span class="o">+</span> <span class="n">options</span><span class="o">.</span><span class="n">cal</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+    <span class="k">return</span>
+  <span class="n">titles_list</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">build_titles_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="n">parser</span> <span class="o">=</span> <span class="n">DateRangeParser</span><span class="p">()</span>
+  <span class="n">date_range</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">cal</span> <span class="ow">in</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&#39;&#39;</span>
+    <span class="k">print</span> <span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">cal</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;]&#39;</span><span class="p">)</span>
+    <span class="n">single_events</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                                      <span class="n">start_date</span><span class="o">=</span><span class="n">date_range</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                                      <span class="n">end_date</span><span class="o">=</span><span class="n">date_range</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                                      <span class="n">titles</span><span class="o">=</span><span class="n">titles_list</span><span class="p">,</span>
+                                      <span class="n">query</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+                                      <span class="n">split</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">single_events</span><span class="p">:</span>
+      <span class="k">print</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">compile_entry_string</span><span class="p">(</span>
+                            <span class="n">CalendarEntryToStringWrapper</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
+                            <span class="n">options</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">),</span>
+                            <span class="n">delimiter</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">delimiter</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <h6>######################################################################### &lt;span id="each-of-the-following-<em>run</em>*-functions-execute-a-particular-task.</h6>
+<p>keyword-arguments:
+-client:-client-to-the-service-being-used.
+-options:-contains-all-attributes-required-to-perform-the-task
+-args:-additional-arguments-passed-in-on-the-command-line,-may-or-may-not-be
+-------required" href="each-of-the-following-<em>run</em>*-functions-execute-a-particular-task.</p>
+<p>keyword-arguments:
+-client:-client-to-the-service-being-used.
+-options:-contains-all-attributes-required-to-perform-the-task
+-args:-additional-arguments-passed-in-on-the-command-line,-may-or-may-not-be
+-------required"&gt;
+Each of the following <em>run</em>* functions execute a particular task.</p>
+<p>Keyword arguments:
+ client: Client to the service being used.
+ options: Contains all attributes required to perform the task
+ args: Additional arguments passed in on the command line, may or may not be
+       required
+</span></p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>If no other search parameters are mentioned, set date to be
+today. (Prevent user from retrieving all events ever)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="n">args</span>  <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="s">&#39;today,&#39;</span>
+  <span class="n">_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_list_today</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">options</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="s">&#39;today&#39;</span>
+  <span class="n">_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_add</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">cal_user_list</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_calendar_user_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">cal</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;No calendar matches &quot;&#39;</span> <span class="o">+</span> <span class="n">options</span><span class="o">.</span><span class="n">cal</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+    <span class="k">return</span>
+  <span class="n">reminder_in_minutes</span> <span class="o">=</span> <span class="n">convert_reminder_string</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">reminder</span><span class="p">)</span>
+  <span class="n">events_list</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">src</span> <span class="o">+</span> <span class="n">args</span>
+  <span class="n">reminder_results</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">cal</span> <span class="ow">in</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">full_add_event</span><span class="p">(</span><span class="n">events_list</span><span class="p">,</span> <span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
+                                      <span class="n">reminder_in_minutes</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">quick_add_event</span><span class="p">(</span><span class="n">events_list</span><span class="p">,</span> <span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">reminder_in_minutes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">reminder_results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">add_reminders</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                                                <span class="n">results</span><span class="p">,</span>
+                                                <span class="n">reminder_in_minutes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">LOG</span><span class="o">.</span><span class="n">isEnabledFor</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">):</span>
+      <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">results</span> <span class="o">+</span> <span class="n">reminder_results</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;ID: </span><span class="si">%s</span><span class="s">, status: </span><span class="si">%s</span><span class="s">, reason: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                  <span class="n">entry</span><span class="o">.</span><span class="n">batch_id</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                  <span class="n">entry</span><span class="o">.</span><span class="n">batch_status</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                  <span class="n">entry</span><span class="o">.</span><span class="n">batch_status</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Event created: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">entry</span><span class="o">.</span><span class="n">GetHtmlLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_delete</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">cal_user_list</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_calendar_user_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">cal</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;No calendar matches &quot;&#39;</span> <span class="o">+</span> <span class="n">options</span><span class="o">.</span><span class="n">cal</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+    <span class="k">return</span>
+  <span class="n">parser</span> <span class="o">=</span> <span class="n">DateRangeParser</span><span class="p">()</span>
+  <span class="n">date_range</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+
+  <span class="n">titles_list</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">build_titles_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">cal</span> <span class="ow">in</span> <span class="n">cal_user_list</span><span class="p">:</span>
+    <span class="n">single_events</span><span class="p">,</span> <span class="n">recurring_events</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                                                    <span class="n">start_date</span><span class="o">=</span><span class="n">date_range</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                                                    <span class="n">end_date</span><span class="o">=</span><span class="n">date_range</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                                                    <span class="n">titles</span><span class="o">=</span><span class="n">titles_list</span><span class="p">,</span>
+                                                    <span class="n">query</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+                                                    <span class="n">expand_recurrence</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">prompt</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;For calendar &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">cal</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">single_events</span><span class="p">:</span>
+      <span class="n">client</span><span class="o">.</span><span class="n">DeleteEntryList</span><span class="p">(</span><span class="n">single_events</span><span class="p">,</span> <span class="s">&#39;event&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">prompt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">recurring_events</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">date_range</span><span class="o">.</span><span class="n">specified_as_range</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>if the user specified a date that was a range...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">client</span><span class="o">.</span><span class="n">delete_recurring_events</span><span class="p">(</span><span class="n">recurring_events</span><span class="p">,</span> <span class="n">date_range</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                                       <span class="n">date_range</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">prompt</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">delete_recurring_events</span><span class="p">(</span><span class="n">recurring_events</span><span class="p">,</span> <span class="n">date_range</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                                       <span class="bp">None</span><span class="p">,</span> <span class="n">cal</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">prompt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">single_events</span> <span class="ow">or</span> <span class="n">recurring_events</span><span class="p">):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No events found that match your options!&#39;</span><span class="p">)</span>
+
+
+<span class="n">TASKS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;list&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;List events on a calendar&#39;</span><span class="p">,</span>
+                                    <span class="n">callback</span><span class="o">=</span><span class="n">_run_list</span><span class="p">,</span>
+                                    <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;fields&#39;</span><span class="p">,</span> <span class="s">&#39;delimiter&#39;</span><span class="p">],</span>
+                                    <span class="n">optional</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;query&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;cal&#39;</span><span class="p">]),</span>
+         <span class="s">&#39;today&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;List events for the next 24 hours&#39;</span><span class="p">,</span>
+                                     <span class="n">callback</span><span class="o">=</span><span class="n">_run_list_today</span><span class="p">,</span>
+                                     <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;fields&#39;</span><span class="p">,</span> <span class="s">&#39;delimiter&#39;</span><span class="p">],</span>
+                                     <span class="n">optional</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;query&#39;</span><span class="p">,</span> <span class="s">&#39;cal&#39;</span><span class="p">]),</span>
+         <span class="s">&#39;add&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;Add event to a calendar&#39;</span><span class="p">,</span>
+                                   <span class="n">callback</span><span class="o">=</span><span class="n">_run_add</span><span class="p">,</span>
+                                   <span class="n">required</span><span class="o">=</span><span class="s">&#39;src&#39;</span><span class="p">,</span>
+                                   <span class="n">optional</span><span class="o">=</span><span class="s">&#39;cal&#39;</span><span class="p">),</span>
+         <span class="s">&#39;delete&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;Delete event from a calendar&#39;</span><span class="p">,</span>
+                                      <span class="n">callback</span><span class="o">=</span><span class="n">_run_delete</span><span class="p">,</span>
+                                      <span class="n">required</span><span class="o">=</span><span class="p">[[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;query&#39;</span><span class="p">]],</span>
+                                      <span class="n">optional</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;cal&#39;</span><span class="p">])}</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

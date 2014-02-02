@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>authentication.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>authentication.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Subfunction for the Google command line tool, GoogleCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>This function handles the authentication and storage of
+credentials for the services which use OAuth2</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">httplib2</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">from</span> <span class="nn">oauth2client.file</span> <span class="kn">import</span> <span class="n">Storage</span>
+<span class="kn">from</span> <span class="nn">oauth2client.client</span> <span class="kn">import</span> <span class="n">OAuth2WebServerFlow</span>
+<span class="kn">from</span> <span class="nn">oauth2client.tools</span> <span class="kn">import</span> <span class="n">run</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span>
+
+<span class="n">TOKENS_FILENAME_FORMAT</span> <span class="o">=</span> <span class="s">&#39;dca_</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Authenticates an provided http object,</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">authenticate</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">servicename</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">http</span><span class="p">,</span> <span class="n">client_id</span><span class="p">,</span>
+                 <span class="n">client_secret</span><span class="p">,</span> <span class="n">force_auth</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>rompts for user confirmation if necessary, and stores the credentials</p>
+<p>rgs:
+ email: The email address of the user
+ servicename: The service which requires authentication
+ doc: Documentation for the service (for determining scopes)
+ http: The object being authenticated</p>
+<p>eturns:
+ The authorized object</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">tokens_path</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">(</span><span class="n">TOKENS_FILENAME_FORMAT</span> <span class="o">%</span>
+                                     <span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">servicename</span><span class="p">),</span>
+                                     <span class="n">create_missing_dir</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+  <span class="n">storage</span> <span class="o">=</span> <span class="n">Storage</span><span class="p">(</span><span class="n">tokens_path</span><span class="p">)</span>
+  <span class="n">credentials</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+  <span class="k">if</span> <span class="n">credentials</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">credentials</span><span class="o">.</span><span class="n">invalid</span> <span class="ow">or</span> <span class="n">force_auth</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Works with google-api-python-client-1.0beta2, but not with
+beta4.  They're working on a way to allow deleting credentials.
+storage.put(None)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">desiredcred</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;auth&#39;</span><span class="p">][</span><span class="s">&#39;oauth2&#39;</span><span class="p">][</span><span class="s">&#39;scopes&#39;</span><span class="p">]:</span>
+      <span class="n">desiredcred</span> <span class="o">=</span> <span class="n">desiredcred</span> <span class="o">+</span> <span class="n">arg</span> <span class="o">+</span> <span class="s">&#39; &#39;</span>
+    <span class="n">FLOW</span> <span class="o">=</span> <span class="n">OAuth2WebServerFlow</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="n">client_secret</span><span class="p">,</span>
+      <span class="n">scope</span><span class="o">=</span><span class="n">desiredcred</span><span class="p">,</span> <span class="n">user_agent</span><span class="o">=</span><span class="s">&#39;discoverycl&#39;</span><span class="p">)</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">FLOW</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">credentials</span><span class="o">.</span><span class="n">authorize</span><span class="p">(</span><span class="n">http</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

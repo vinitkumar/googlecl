@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>service.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>service.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Service details and instances for the Picasa service.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Some use cases:
+Add event:
+  calendar add "Lunch with Tony on Tuesday at 12:00"</p>
+<p>List events for today:
+  calendar today</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;tom.h.miller@gmail.com (Tom Miller)&#39;</span>
+<span class="kn">import</span> <span class="nn">gdata.calendar.service</span>
+<span class="kn">import</span> <span class="nn">googlecl.base</span>
+<span class="kn">import</span> <span class="nn">googlecl.service</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">from</span> <span class="nn">googlecl</span> <span class="kn">import</span> <span class="n">safe_encode</span><span class="p">,</span> <span class="n">safe_decode</span>
+<span class="kn">from</span> <span class="nn">googlecl.calendar</span> <span class="kn">import</span> <span class="n">SECTION_HEADER</span>
+<span class="kn">from</span> <span class="nn">googlecl.calendar.date</span> <span class="kn">import</span> <span class="n">DateRangeParser</span>
+
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span>
+<span class="n">USER_BATCH_URL_FORMAT</span> <span class="o">=</span> \
+               <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">DEFAULT_BATCH_URL</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Base error for Calendar errors.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">CalendarError</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>No events matching given parameters were found.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">EventsNotFound</span><span class="p">(</span><span class="n">CalendarError</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Wrapper class for some calendar entry data.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">Calendar</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Parse a CalendarEntry into "user" and human-readable names,</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal_entry</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>or take them directly."""
+if cal_entry:
+  # Non-primary calendar feeds look like this:
+  # http:blah/.../feeds/JUNK%40group.calendar.google.com/private/full
+  # So grab the part after /feeds/ and unquote it.
+  self.user = urllib.unquote(cal_entry.content.src.split('/')[-3])
+  self.name = safe_decode(cal_entry.title.text)
+else:
+  self.user = user
+  self.name = name</p>
+<p>f <strong>str</strong>(self):
+return self.name</p>
+<p>s CalendarServiceCL(gdata.calendar.service.CalendarService,
+                    googlecl.service.BaseServiceCL):</p>
+<p>Extends gdata.calendar.service.CalendarService for the command line.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">This</span> <span class="k">class</span> <span class="nc">adds</span> <span class="n">some</span> <span class="n">features</span> <span class="n">focused</span> <span class="n">on</span> <span class="n">using</span> <span class="n">Calendar</span> <span class="n">via</span> <span class="n">an</span> <span class="n">installed</span>
+  <span class="n">app</span> <span class="k">with</span> <span class="n">a</span> <span class="n">command</span> <span class="n">line</span> <span class="n">interface</span><span class="o">.</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>def <strong>init</strong>(self, config):
+Constructor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">CalendarService</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="n">googlecl</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BaseServiceCL</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SECTION_HEADER</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Delete a subset of instances of recurring events.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_batch_delete_recur</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">,</span>
+                          <span class="n">start_date</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">end_date</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">request_feed</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventFeed</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Don't need to decode event.title.text here because it's not being
+displayed to the user. Totally internal.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">_</span><span class="p">,</span> <span class="n">recurring_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">cal_user</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+                                          <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>
+                                          <span class="n">titles</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                                          <span class="n">expand_recurrence</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">delete_events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">recurring_events</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">original_event</span> <span class="ow">and</span>
+                     <span class="n">e</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">delete_events</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">EventsNotFound</span>
+    <span class="nb">map</span><span class="p">(</span><span class="n">request_feed</span><span class="o">.</span><span class="n">AddDelete</span><span class="p">,</span> <span class="p">[</span><span class="bp">None</span><span class="p">],</span> <span class="n">delete_events</span><span class="p">,</span> <span class="p">[</span><span class="bp">None</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ExecuteBatch</span><span class="p">(</span><span class="n">request_feed</span><span class="p">,</span> <span class="n">USER_BATCH_URL_FORMAT</span> <span class="o">%</span> <span class="n">cal_user</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Add default reminders to events.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">add_reminders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calendar_user</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">minutes</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Keyword arguments:
+  calendar_user: "User" of the calendar.
+  events: List of events to add reminder to.
+  minutes: Number of minutes before each event to send reminder.</p>
+<p>Returns:
+  List of events with batch results.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">request_feed</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventFeed</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">a_when</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="p">:</span>
+          <span class="n">a_when</span><span class="o">.</span><span class="n">reminder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">Reminder</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;No &quot;when&quot; data for event!&#39;</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">When</span><span class="p">())</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reminder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">Reminder</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">))</span>
+      <span class="n">request_feed</span><span class="o">.</span><span class="n">AddUpdate</span><span class="p">(</span><span class="n">entry</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
+    <span class="n">response_feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExecuteBatch</span><span class="p">(</span><span class="n">request_feed</span><span class="p">,</span>
+                                      <span class="n">USER_BATCH_URL_FORMAT</span> <span class="o">%</span> <span class="n">calendar_user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response_feed</span><span class="o">.</span><span class="n">entry</span>
+
+  <span class="n">AddReminders</span> <span class="o">=</span> <span class="n">add_reminders</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Delete recurring events from a calendar.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">delete_recurring_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">,</span>
+                              <span class="n">prompt</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Keyword arguments:
+  events: List of non-expanded calendar events to delete.
+  start_date: Date specifying the start of events (inclusive).
+  end_date: Date specifying the end of events (inclusive). None for no end
+      date.
+  cal_user: "User" of the calendar to delete events from.
+  prompt: True if we should prompt before deleting events, False otherwise.</p>
+<p>option_list is a list of tuples, (prompt_string, deletion_instruction)
+prompt_string gets displayed to the user,
+deletion_instruction is a special value that will let the program know
+  what to do.
+    'ALL' -- delete all events in the series.
+    'NONE' -- don't delete anything.
+    'TWIXT' -- delete events between start_date and end_date.
+    'ON' -- delete events on the single date given.
+    'ONAFTER' -- delete events on and after the date given.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">deletion_choice</span> <span class="o">=</span> <span class="s">&#39;ALL&#39;</span>
+    <span class="n">option_list</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;All events in this series&#39;</span><span class="p">,</span> <span class="n">deletion_choice</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">start_date</span> <span class="ow">and</span> <span class="n">end_date</span><span class="p">:</span>
+      <span class="n">deletion_choice</span> <span class="o">=</span> <span class="s">&#39;TWIXT&#39;</span>
+      <span class="n">option_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Instances between </span><span class="si">%s</span><span class="s"> and </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                          <span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">),</span> <span class="n">deletion_choice</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">start_date</span> <span class="ow">or</span> <span class="n">end_date</span><span class="p">:</span>
+      <span class="n">delete_date</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_date</span> <span class="ow">or</span> <span class="n">end_date</span><span class="p">)</span>
+      <span class="n">option_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Instances on </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">delete_date</span><span class="p">,</span> <span class="s">&#39;ON&#39;</span><span class="p">))</span>
+      <span class="n">option_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;All events on and after </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">delete_date</span><span class="p">,</span>
+                          <span class="s">&#39;ONAFTER&#39;</span><span class="p">))</span>
+      <span class="n">deletion_choice</span> <span class="o">=</span> <span class="s">&#39;ON&#39;</span>
+    <span class="n">option_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Do not delete&#39;</span><span class="p">,</span> <span class="s">&#39;NONE&#39;</span><span class="p">))</span>
+    <span class="n">prompt_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">option</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">option_list</span><span class="p">):</span>
+      <span class="n">prompt_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;) &#39;</span> <span class="o">+</span> <span class="n">option</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Condense events so that the user isn't prompted for the same event
+multiple times. This is assuming that recurring events have been expanded.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">events</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">condense_recurring_events</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+        <span class="n">delete_selection</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">while</span> <span class="n">delete_selection</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">delete_selection</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">option_list</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+          <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Delete &quot;</span><span class="si">%s</span><span class="s">&quot;?</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>\
+                <span class="p">(</span><span class="n">safe_decode</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">),</span> <span class="n">prompt_str</span><span class="p">)</span>
+          <span class="k">try</span><span class="p">:</span>
+            <span class="n">delete_selection</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">raw_input</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="n">msg</span><span class="p">)))</span>
+          <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">deletion_choice</span> <span class="o">=</span> <span class="n">option_list</span><span class="p">[</span><span class="n">delete_selection</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>deletion_choice has either been picked by the prompt, or is the default
+value. The default value is determined by the date info passed in,
+and should be the "least destructive" option.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="n">deletion_choice</span> <span class="o">==</span> <span class="s">&#39;ALL&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delete_original_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">deletion_choice</span> <span class="o">==</span> <span class="s">&#39;TWIXT&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_delete_recur</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">,</span>
+                                 <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+                                 <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">deletion_choice</span> <span class="o">==</span> <span class="s">&#39;ON&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_delete_recur</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">,</span>
+                                 <span class="n">start_date</span><span class="o">=</span><span class="n">delete_date</span><span class="p">,</span>
+                                 <span class="n">end_date</span><span class="o">=</span><span class="n">delete_date</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">deletion_choice</span> <span class="o">==</span> <span class="s">&#39;ONAFTER&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_delete_recur</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">,</span>
+                                 <span class="n">start_date</span><span class="o">=</span><span class="n">delete_date</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">deletion_choice</span> <span class="o">!=</span> <span class="s">&#39;NONE&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CalendarError</span><span class="p">(</span><span class="s">&#39;Got unexpected batch deletion command!&#39;</span><span class="p">)</span>
+
+  <span class="n">DeleteRecurringEvents</span> <span class="o">=</span> <span class="n">delete_recurring_events</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Deletes the original event corresponding to an expanded recurrence.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_delete_original_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expanded_event</span><span class="p">,</span> <span class="n">cal_user</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>Args:
+  expanded_event: Expanded recurrence. Should contain the "original_event"
+      attribute.
+  cal_user: Calendar user, used to retrieve events.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">_</span><span class="p">,</span> <span class="n">recurring_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">cal_user</span><span class="p">,</span>
+                                          <span class="n">query</span><span class="o">=</span><span class="n">expanded_event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                                          <span class="n">expand_recurrence</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">recurring_events</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">expanded_event</span><span class="o">.</span><span class="n">original_event</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Matched on event </span><span class="si">%s</span><span class="s">, deleting without prompt&#39;</span> <span class="o">%</span>
+                  <span class="n">event</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">GetEditLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Create an event piece by piece (no quick add).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">full_add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">titles</span><span class="p">,</span> <span class="n">calendar_user</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">reminder</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Args:
+  titles: List of titles of events.
+  calendar_user: "User" of the calendar to add to.
+  date: Text representation of a date and/or time.
+  reminder: Number of minutes before event to send reminder. Set to 0 for no
+      reminder.</p>
+<p>Returns:
+  Response entries from batch-inserting the events.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="kn">import</span> <span class="nn">atom</span>
+    <span class="n">request_feed</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventFeed</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>start_text, _, end_text = googlecl.calendar.date.split_string(date, [','])</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">parser</span> <span class="o">=</span> <span class="n">DateRangeParser</span><span class="p">()</span>
+    <span class="n">date_range</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
+    <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">=</span> <span class="n">date_range</span><span class="o">.</span><span class="n">to_when</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">titles</span><span class="p">:</span>
+      <span class="n">event</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventEntry</span><span class="p">()</span>
+      <span class="n">event</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Title</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+      <span class="n">when</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">When</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+                                 <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">reminder</span><span class="p">:</span>
+        <span class="n">when</span><span class="o">.</span><span class="n">reminder</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">Reminder</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">reminder</span><span class="p">))</span>
+      <span class="n">event</span><span class="o">.</span><span class="n">when</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">when</span><span class="p">)</span>
+      <span class="n">request_feed</span><span class="o">.</span><span class="n">AddInsert</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s">&#39;insert-&#39;</span> <span class="o">+</span> <span class="n">title</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+    <span class="n">response_feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExecuteBatch</span><span class="p">(</span><span class="n">request_feed</span><span class="p">,</span>
+                                      <span class="n">USER_BATCH_URL_FORMAT</span> <span class="o">%</span> <span class="n">calendar_user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response_feed</span><span class="o">.</span><span class="n">entry</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>Add an event using the Calendar Quick Add feature.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">quick_add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quick_add_strings</span><span class="p">,</span> <span class="n">calendar_user</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Keyword arguments:
+  quick_add_strings: List of strings to be parsed by the Calendar service,
+                     as if it was entered via the "Quick Add" function.
+  calendar_user: "User" of the calendar to add to.</p>
+<p>Returns:
+  The event that was added, or None if the event was not added.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="kn">import</span> <span class="nn">atom</span>
+    <span class="n">request_feed</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventFeed</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">event_str</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quick_add_strings</span><span class="p">):</span>
+      <span class="n">event</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventEntry</span><span class="p">()</span>
+      <span class="n">event</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Content</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">event_str</span><span class="p">)</span>
+      <span class="n">event</span><span class="o">.</span><span class="n">quick_add</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">QuickAdd</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">&#39;true&#39;</span><span class="p">)</span>
+      <span class="n">request_feed</span><span class="o">.</span><span class="n">AddInsert</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s">&#39;insert-&#39;</span> <span class="o">+</span> <span class="n">event_str</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="n">response_feed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ExecuteBatch</span><span class="p">(</span><span class="n">request_feed</span><span class="p">,</span>
+                                      <span class="n">USER_BATCH_URL_FORMAT</span> <span class="o">%</span> <span class="n">calendar_user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response_feed</span><span class="o">.</span><span class="n">entry</span>
+
+  <span class="n">QuickAddEvent</span> <span class="o">=</span> <span class="n">quick_add_event</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Get "user" name and human-readable name for one or more calendars.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_calendar_user_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>The "user" for a calendar is an awful misnomer for the ID for the calendar.
+To get events for a calendar, you can form a query with
+  cal_list = self.get_calendar_user_list('my calendar name')
+  if cal_list:
+    query = gdata.calendar.CalendarEventQuery(user=cal_list[0].user)</p>
+<p>Keyword arguments:
+  cal_name: Name of the calendar to match. Default None to return the
+            an instance representing only the default / main calendar.</p>
+<p>Returns:
+  A list of Calendar instances, or None of there were no matches
+  for cal_name.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_name</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">[</span><span class="n">Calendar</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">cal_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetEntries</span><span class="p">(</span><span class="s">&#39;/calendar/feeds/default/allcalendars/full&#39;</span><span class="p">,</span>
+                                 <span class="n">cal_name</span><span class="p">,</span>
+                          <span class="n">converter</span><span class="o">=</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarListFeedFromString</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">cal_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Calendar</span><span class="p">(</span><span class="n">cal</span><span class="p">)</span> <span class="k">for</span> <span class="n">cal</span> <span class="ow">in</span> <span class="n">cal_list</span><span class="p">]</span>
+    <span class="k">return</span> <span class="bp">None</span>
+
+  <span class="n">GetCalendarUserList</span> <span class="o">=</span> <span class="n">get_calendar_user_list</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>Get events.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calendar_user</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">end_date</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">titles</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expand_recurrence</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      <p>Keyword arguments:
+  calendar_user: "user" of the calendar to get events for.
+                 See get_calendar_user_list.
+  start_date: Start date of the event(s). Default None.
+  end_date: End date of the event(s). Default None.
+  titles: string or list Title(s) to look for in the event, supporting
+          regular expressions. Default None for any title.
+  query: Query string (not encoded) for doing full-text searches on event
+         titles and content.
+  expand_recurrence: If true, expand recurring events per the 'singleevents'
+                     query parameter. Otherwise, don't.
+  split: Split events into "one-time" and "recurring" events.</p>
+<p>Returns:
+  List of events from calendar that match the given params.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">query</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">CalendarEventQuery</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">calendar_user</span><span class="p">,</span>
+                                                      <span class="n">text_query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">start_date</span><span class="p">:</span>
+      <span class="n">query</span><span class="o">.</span><span class="n">start_min</span> <span class="o">=</span> <span class="n">start_date</span><span class="o">.</span><span class="n">to_query</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">end_date</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      <p>End dates are naturally exclusive, so make it inclusive.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">query</span><span class="o">.</span><span class="n">start_max</span> <span class="o">=</span> <span class="n">end_date</span><span class="o">.</span><span class="n">to_inclusive_query</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">expand_recurrence</span><span class="p">:</span>
+      <span class="n">query</span><span class="o">.</span><span class="n">singleevents</span> <span class="o">=</span> <span class="s">&#39;true&#39;</span>
+    <span class="n">query</span><span class="o">.</span><span class="n">orderby</span> <span class="o">=</span> <span class="s">&#39;starttime&#39;</span>
+    <span class="n">query</span><span class="o">.</span><span class="n">sortorder</span> <span class="o">=</span> <span class="s">&#39;ascend&#39;</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetEntries</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">ToUri</span><span class="p">(),</span> <span class="n">titles</span><span class="p">,</span>
+                           <span class="n">converter</span><span class="o">=</span><span class="n">gdata</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">CalendarEventFeedFromString</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">split</span><span class="p">:</span>
+      <span class="n">single_events</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">filter_recurring_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span>
+                                                              <span class="n">expand_recurrence</span><span class="p">)</span>
+      <span class="n">recurring_events</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">filter_single_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span>
+                                                              <span class="n">expand_recurrence</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">start_date</span> <span class="ow">or</span> <span class="n">end_date</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>Because of how the "when" info on all-day events is stored, we need to
+do a filter step to remove all-day events on the edge of the date
+range.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">single_events</span> <span class="o">=</span> \
+            <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">filter_all_day_events_outside_range</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span>
+                                                                  <span class="n">end_date</span><span class="p">,</span>
+                                                                  <span class="n">single_events</span><span class="p">)</span>
+        <span class="n">recurring_events</span> <span class="o">=</span> \
+            <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">filter_all_day_events_outside_range</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span>
+                                                                  <span class="n">end_date</span><span class="p">,</span>
+                                                               <span class="n">recurring_events</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">single_events</span><span class="p">,</span> <span class="n">recurring_events</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">start_date</span> <span class="ow">or</span> <span class="n">end_date</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">calendar</span><span class="o">.</span><span class="n">filter_all_day_events_outside_range</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span>
+                                                                     <span class="n">end_date</span><span class="p">,</span>
+                                                                     <span class="n">events</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">events</span>
+
+  <span class="n">GetEvents</span> <span class="o">=</span> <span class="n">get_events</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      <p>Check that the token being used is valid.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">is_token_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_uri</span><span class="o">=</span><span class="s">&#39;/calendar/feeds/default/private/full&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BaseServiceCL</span><span class="o">.</span><span class="n">IsTokenValid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_uri</span><span class="p">)</span>
+
+  <span class="n">IsTokenValid</span> <span class="o">=</span> <span class="n">is_token_valid</span>
+
+
+<span class="n">SERVICE_CLASS</span> <span class="o">=</span> <span class="n">CalendarServiceCL</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

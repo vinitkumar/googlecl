@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>__init__.py</title>
+  <link rel="stylesheet" href="../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>__init__.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Contains configuration and read/write utility functions for GoogleCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;tom.h.miller@gmail.com (Tom Miller)&#39;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">googlecl.config.parser</span>
+
+<span class="n">SUBDIR_NAME</span> <span class="o">=</span> <span class="s">&#39;googlecl&#39;</span>
+<span class="n">DEFAULT_GOOGLECL_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;~&#39;</span><span class="p">,</span> <span class="s">&#39;.googlecl&#39;</span><span class="p">))</span>
+<span class="n">HISTORY_FILENAME</span> <span class="o">=</span> <span class="s">&#39;history&#39;</span>
+<span class="n">TOKENS_FILENAME_FORMAT</span> <span class="o">=</span> <span class="s">&#39;access_tok_</span><span class="si">%s</span><span class="s">&#39;</span>
+<span class="n">DEVKEY_FILENAME</span> <span class="o">=</span> <span class="s">&#39;yt_devkey&#39;</span>
+
+<span class="n">FILE_EXT_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;.*\.([a-zA-Z0-9]{2,}$)&#39;</span><span class="p">)</span>
+<span class="n">LOGGER_NAME</span> <span class="o">=</span> <span class="n">__name__</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">LOGGER_NAME</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">determine_terminal_encoding</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+  <span class="kn">import</span> <span class="nn">sys</span>
+  <span class="n">in_enc</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+  <span class="n">out_enc</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+  <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
+    <span class="n">in_enc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">encoding</span>
+  <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
+    <span class="n">out_enc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">encoding</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Sometimes these are both defined, and hopefully they are both equal.
+I'm not sure if they are guaranteed to be equal.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">in_enc</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">out_enc</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>If they're not defined, return the encoding specific in the config file,
+or the python system-wide default encoding (if the above is not defined)
+Apparently the above values aren't set when run as a cron job or piped?</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">in_enc</span><span class="p">:</span>
+      <span class="n">return_enc</span> <span class="o">=</span> <span class="bp">None</span>
+      <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">return_enc</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">safe_get</span><span class="p">(</span><span class="s">&#39;GENERAL&#39;</span><span class="p">,</span> <span class="s">&#39;default_encoding&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">return_enc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">return_enc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">getdefaultencoding</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">return_enc</span> <span class="o">=</span> <span class="n">in_enc</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>If they are not equal, at least one of them must be defined.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Both defined, but are not the same</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">in_enc</span> <span class="ow">and</span> <span class="n">out_enc</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;HEY! You have a different encoding for input and output&#39;</span><span class="p">)</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Input: &#39;</span> <span class="o">+</span> <span class="n">in_enc</span><span class="p">)</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Output: &#39;</span> <span class="o">+</span> <span class="n">in_enc</span><span class="p">)</span>
+    <span class="n">return_enc</span> <span class="o">=</span> <span class="n">out_enc</span> <span class="ow">or</span> <span class="n">in_enc</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;determine_terminal_encoding(): &#39;</span> <span class="o">+</span> <span class="n">return_enc</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">return_enc</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Because this gets done at googlecl module load, there's no config parser
+to pass in.
+XXX: googlecl.config.load_configuration() currently sets this again,
+but that's less than optimal...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">TERMINAL_ENCODING</span> <span class="o">=</span> <span class="n">determine_terminal_encoding</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">SafeEncodeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">SafeDecodeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Build a list of titles from the 'title' option and arguments.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">build_titles_list</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Args:
+  title: NoneType or unicode Title given to options.title
+  args: list Leftover arguments on the command line, presumably extra titles.</p>
+<p>Returns:
+  List of strings or [None].</p>
+<p>If args is non-empty, assume the user is giving us titles to get</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+    <span class="n">titles_list</span> <span class="o">=</span> <span class="n">args</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>If options.title is also given, add it to the list of titles</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+      <span class="n">titles_list</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">title</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">titles_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">title</span><span class="p">]</span>
+  <span class="k">return</span> <span class="n">titles_list</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Return the extension of a file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_extension_from_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">match</span> <span class="o">=</span> <span class="n">FILE_EXT_PATTERN</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Get the full path to the history file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_data_path</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span>
+                  <span class="n">default_directories</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                  <span class="n">create_missing_dir</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>See googlecl.get_xdg_path()</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">return</span> <span class="n">get_xdg_path</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;DATA&#39;</span><span class="p">,</span> <span class="n">default_directories</span><span class="p">,</span>
+                      <span class="n">create_missing_dir</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Get the full path to a file using XDG file layout spec.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">get_xdg_path</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">default_directories</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">create_missing_dir</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Follows XDG Base Directory Specification.
+(http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html).
+Tries default_directories and DEFAULT_GOOGLECL_DIR if no file is found
+via XDG spec.</p>
+<p>Keyword arguments:
+  filename: Filename of the file.
+  data_type: One of 'config' for config files or 'data' for data files.
+  default_directories: List of directories to check if no file is found
+      in directories specified by XDG spec and DEFAULT_GOOGLECL_DIR.
+      Default None.
+  create_missing_dir: Whether or not to create a missing config subdirectory
+      in the default base directory. Default False.</p>
+<p>Returns:
+  Path to config file, which may not exist. If create_missing_dir,
+  the directory where the config file should be will be created if it
+  does not exist.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">data_type</span> <span class="o">=</span> <span class="n">data_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+  <span class="k">if</span> <span class="n">data_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;CONFIG&#39;</span><span class="p">,</span> <span class="s">&#39;DATA&#39;</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Invalid value for data_type: &#39;</span> <span class="o">+</span> <span class="n">data_type</span><span class="p">)</span>
+  <span class="n">xdg_home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;XDG_&#39;</span> <span class="o">+</span> <span class="n">data_type</span> <span class="o">+</span> <span class="s">&#39;_HOME&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">xdg_home_dir</span><span class="p">:</span>
+    <span class="n">home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s">&#39;~&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s">&#39;DATA&#39;</span><span class="p">:</span>
+      <span class="n">xdg_home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home_dir</span><span class="p">,</span> <span class="s">&#39;.local&#39;</span><span class="p">,</span> <span class="s">&#39;share&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s">&#39;CONFIG&#39;</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>No variable defined, using $HOME/.config</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">xdg_home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home_dir</span><span class="p">,</span> <span class="s">&#39;.config&#39;</span><span class="p">)</span>
+  <span class="n">xdg_home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">xdg_home_dir</span><span class="p">,</span> <span class="n">SUBDIR_NAME</span><span class="p">)</span>
+
+  <span class="n">xdg_dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;XDG_&#39;</span> <span class="o">+</span> <span class="n">data_type</span> <span class="o">+</span> <span class="s">&#39;_DIRS&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">xdg_dir_list</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s">&#39;DATA&#39;</span><span class="p">:</span>
+      <span class="n">xdg_dir_list</span> <span class="o">=</span> <span class="s">&#39;/usr/local/share/:/usr/share/&#39;</span>
+    <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s">&#39;CONFIG&#39;</span><span class="p">:</span>
+      <span class="n">xdg_dir_list</span> <span class="o">=</span> <span class="s">&#39;/etc/xdg&#39;</span>
+  <span class="n">xdg_dir_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">SUBDIR_NAME</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">xdg_dir_list</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)]</span>
+
+  <span class="n">dir_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">),</span> <span class="n">xdg_home_dir</span><span class="p">]</span> <span class="o">+</span> <span class="n">xdg_dir_list</span> <span class="o">+</span>\
+             <span class="p">[</span><span class="n">DEFAULT_GOOGLECL_DIR</span><span class="p">]</span>
+  <span class="k">if</span> <span class="n">default_directories</span><span class="p">:</span>
+    <span class="n">dir_list</span> <span class="o">+=</span> <span class="n">default_directories</span>
+  <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">dir_list</span><span class="p">:</span>
+    <span class="n">config_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">config_path</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not find &#39;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s">&#39; in any of &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dir_list</span><span class="p">))</span>
+
+  <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>
+    <span class="n">default_dir</span> <span class="o">=</span> <span class="n">xdg_home_dir</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="mo">0700</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">default_dir</span> <span class="o">=</span> <span class="n">DEFAULT_GOOGLECL_DIR</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="mo">0777</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">default_dir</span><span class="p">)</span> <span class="ow">and</span> <span class="n">create_missing_dir</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">default_dir</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+      <span class="k">return</span> <span class="s">&#39;&#39;</span>
+  <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">default_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Return the cached YouTube developer's key.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">read_devkey</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">key_path</span> <span class="o">=</span> <span class="n">get_data_path</span><span class="p">(</span><span class="n">DEVKEY_FILENAME</span><span class="p">)</span>
+  <span class="n">devkey</span> <span class="o">=</span> <span class="bp">None</span>
+  <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">key_path</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">key_path</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">key_file</span><span class="p">:</span>
+      <span class="n">devkey</span> <span class="o">=</span> <span class="n">key_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+  <span class="k">return</span> <span class="n">devkey</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Encode a unicode string to target_encoding.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">safe_encode</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">target_encoding</span><span class="o">=</span><span class="n">TERMINAL_ENCODING</span><span class="p">,</span>
+                <span class="n">errors</span><span class="o">=</span><span class="s">&#39;backslashreplace&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>If given a str type, check to see that target_encoding can decode it
+without an error. Raises a SafeEncodeError if it can't.
+Given any other type, returns str() version of it.</p>
+<p>Args:
+  string: unicode String to encode.
+  target_encoding: str Encoding to encode to. Default TERMINAL_ENCODING.
+  errors: str Name of the error handler to call if something goes wrong.
+          See docs on the codecs module. Default 'backslashreplace'.</p>
+<p>Returns:
+  A string encoded with target_encoding, or raises an error.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">target_encoding</span><span class="p">,</span> <span class="n">errors</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">string</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">target_encoding</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">SafeEncodeError</span><span class="p">(</span><span class="s">&#39;Passed a non-unicode string to safe_encode!&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">string</span>
+  <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Got something else, probably an int or bool or the like.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>Decode a byte string.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">safe_decode</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">current_encoding</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s">&#39;strict&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Raises a SafeDecodeError if current_encoding cannot decode the string and
+the value of errors causes an exception to be raised.
+If given a unicde type, returns it immediately.
+Given any other type, returns unicode() version of it.</p>
+<p>Args:
+  string: str String to decode.
+  target_encoding: str Encoding to decode with. Default 'utf-8'.
+  errors: str Name of the error handler to call if something goes wrong.
+          See docs on the codecs module. Default 'strict'.</p>
+<p>Returns:
+  A unicode string, or raises an error.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">string</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">current_encoding</span><span class="p">,</span> <span class="n">errors</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">SafeDecodeError</span><span class="p">(</span><span class="n">current_encoding</span> <span class="o">+</span> <span class="s">&#39; could not decode &#39;</span> <span class="o">+</span>
+                            <span class="nb">repr</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">string</span>
+  <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Got something elese, probably an int or bool or the like.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>Write the devkey to the youtube devkey file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">write_devkey</span><span class="p">(</span><span class="n">devkey</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="kn">import</span> <span class="nn">stat</span>
+  <span class="n">key_path</span> <span class="o">=</span> <span class="n">get_data_path</span><span class="p">(</span><span class="n">DEVKEY_FILENAME</span><span class="p">)</span>
+  <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">key_path</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">key_file</span><span class="p">:</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">key_path</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span><span class="p">)</span>
+    <span class="n">key_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">devkey</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>__init__.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>__init__.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">import</span> <span class="nn">googlecl.base</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">service_name</span> <span class="o">=</span> <span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">LOGGER_NAME</span> <span class="o">=</span> <span class="n">__name__</span>
+<span class="n">SECTION_HEADER</span> <span class="o">=</span> <span class="n">service_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Map an access string to a value YouTube will understand.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_map_access_string</span><span class="p">(</span><span class="n">access_string</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>In this case, YouTube only cares about "is private" so 'public' gets mapped to
+False, everything else to True.</p>
+<p>Returns:
+  Boolean indicating True (is private) or False (is not private).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="ow">not</span> <span class="n">access_string</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">False</span>
+  <span class="k">if</span> <span class="n">access_string</span> <span class="o">==</span> <span class="s">&#39;public&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">False</span>
+  <span class="k">return</span> <span class="bp">True</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">VideoEntryToStringWrapper</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseEntryToStringWrapper</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Author.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">author</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Name of author 'x' name is in entry.author[x].name.text</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">text_extractor</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">),</span> <span class="s">&#39;text&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">author</span><span class="p">,</span> <span class="n">text_extractor</span><span class="o">=</span><span class="n">text_extractor</span><span class="p">)</span>
+  <span class="n">owner</span> <span class="o">=</span> <span class="n">author</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Length of the video, in minutes (MM:SS).</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">minutes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span> <span class="o">%</span> <span class="mi">60</span>
+    <span class="k">return</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s">:</span><span class="si">%#02d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+  <span class="n">time</span> <span class="o">=</span> <span class="n">minutes</span>
+  <span class="n">length</span> <span class="o">=</span> <span class="n">minutes</span>
+  <span class="n">duration</span> <span class="o">=</span> <span class="n">minutes</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Length of the video, in seconds.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">duration</span><span class="o">.</span><span class="n">seconds</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Status of the video.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">control</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Apparently the structure for video entries isn't fully fleshed out,
+so use a regex on the xml.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">xml_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml</span>
+      <span class="n">reason_regex</span> <span class="o">=</span> <span class="s">r&#39;&lt;ns1:control .*? name=&quot;(\w+)&quot; reasonCode=&quot;(\w+)&quot;&#39;</span>
+      <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">reason_regex</span><span class="p">,</span> <span class="n">xml_string</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">private</span><span class="p">:</span>
+      <span class="k">return</span> <span class="s">&#39;private&#39;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">racy</span><span class="p">:</span>
+      <span class="k">return</span> <span class="s">&#39;racy&#39;</span>
+    <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Can't find a difference between public and unlisted videos, in the XML
+or self.entry data structure...</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">return</span> <span class="s">&#39;public/unlisted&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Tags / keywords or labels.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">tags_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">keywords</span><span class="o">.</span><span class="n">text</span>
+    <span class="n">tags_text</span> <span class="o">=</span> <span class="n">tags_text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="p">)</span>
+    <span class="n">tags_list</span> <span class="o">=</span> <span class="n">tags_text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_property_delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags_list</span><span class="p">)</span>
+  <span class="n">labels</span> <span class="o">=</span> <span class="n">tags</span>
+  <span class="n">keywords</span> <span class="o">=</span> <span class="n">tags</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <h6>######################################################################### &lt;span id="each-of-the-following-<em>run</em>*-functions-execute-a-particular-task.</h6>
+<p>keyword-arguments:
+-client:-client-to-the-service-being-used.
+-options:-contains-all-attributes-required-to-perform-the-task
+-args:-additional-arguments-passed-in-on-the-command-line,-may-or-may-not-be
+-------required" href="each-of-the-following-<em>run</em>*-functions-execute-a-particular-task.</p>
+<p>keyword-arguments:
+-client:-client-to-the-service-being-used.
+-options:-contains-all-attributes-required-to-perform-the-task
+-args:-additional-arguments-passed-in-on-the-command-line,-may-or-may-not-be
+-------required"&gt;
+Each of the following <em>run</em>* functions execute a particular task.</p>
+<p>Keyword arguments:
+ client: Client to the service being used.
+ options: Contains all attributes required to perform the task
+ args: Additional arguments passed in on the command line, may or may not be
+       required
+</span></p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">titles_list</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">build_titles_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="n">entries</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">GetVideos</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">owner</span> <span class="ow">or</span> <span class="s">&#39;default&#39;</span><span class="p">,</span>
+                             <span class="n">titles</span><span class="o">=</span><span class="n">titles_list</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+    <span class="k">print</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">compile_entry_string</span><span class="p">(</span><span class="n">VideoEntryToStringWrapper</span><span class="p">(</span><span class="n">vid</span><span class="p">),</span>
+                                             <span class="n">options</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">),</span>
+                                             <span class="n">delimiter</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">delimiter</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_post</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">video_list</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">src</span> <span class="o">+</span> <span class="n">args</span>
+  <span class="n">is_private</span> <span class="o">=</span> <span class="n">_map_access_string</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">access</span><span class="p">)</span>
+  <span class="n">client</span><span class="o">.</span><span class="n">PostVideos</span><span class="p">(</span><span class="n">video_list</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span>
+                    <span class="n">tags</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">tags</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+                    <span class="n">is_private</span><span class="o">=</span><span class="n">is_private</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_tag</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">titles_list</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">build_titles_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="n">video_entries</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">GetVideos</span><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="n">titles_list</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">category</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">CategorizeVideos</span><span class="p">(</span><span class="n">video_entries</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">TagVideos</span><span class="p">(</span><span class="n">video_entries</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">tags</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_run_delete</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+  <span class="n">titles_list</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">build_titles_list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+  <span class="n">entries</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">GetVideos</span><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="n">titles_list</span><span class="p">)</span>
+  <span class="n">client</span><span class="o">.</span><span class="n">DeleteEntryList</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="s">&#39;video&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">prompt</span><span class="p">)</span>
+
+
+<span class="n">TASKS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;post&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;Post a video.&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">_run_post</span><span class="p">,</span>
+                                    <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;src&#39;</span><span class="p">,</span> <span class="s">&#39;category&#39;</span><span class="p">,</span> <span class="s">&#39;devkey&#39;</span><span class="p">],</span>
+                                    <span class="n">optional</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;summary&#39;</span><span class="p">,</span> <span class="s">&#39;tags&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;access&#39;</span><span class="p">]),</span>
+         <span class="s">&#39;list&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;List videos by user.&#39;</span><span class="p">,</span>
+                                    <span class="n">callback</span><span class="o">=</span><span class="n">_run_list</span><span class="p">,</span>
+                                    <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;fields&#39;</span><span class="p">,</span> <span class="s">&#39;delimiter&#39;</span><span class="p">],</span>
+                                    <span class="n">optional</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;owner&#39;</span><span class="p">]),</span>
+         <span class="s">&#39;tag&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;Add tags to a video and/or &#39;</span> <span class="o">+</span>\
+                                   <span class="s">&#39;change its category.&#39;</span><span class="p">,</span>
+                                   <span class="n">callback</span><span class="o">=</span><span class="n">_run_tag</span><span class="p">,</span>
+                                   <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;tags&#39;</span><span class="p">,</span> <span class="s">&#39;category&#39;</span><span class="p">],</span>
+                                             <span class="s">&#39;devkey&#39;</span><span class="p">]),</span>
+         <span class="s">&#39;delete&#39;</span><span class="p">:</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s">&#39;Delete videos.&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">_run_delete</span><span class="p">,</span>
+                                      <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;devkey&#39;</span><span class="p">])}</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>base.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>base.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Service details and instances for the Docs service using GData 3.0.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Some use cases:
+Upload a document:
+  docs upload --folder "Some folder" path_to_doc</p>
+<p>Edit a document in your word editor:
+  docs edit --title "Grocery List" --editor vim (editor also set in prefs)</p>
+<p>Download docs:
+  docs get --folder "Some folder"</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;tom.h.miller@gmail.com (Tom Miller)&#39;</span>
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">googlecl</span>
+<span class="kn">from</span> <span class="nn">googlecl.docs</span> <span class="kn">import</span> <span class="n">SECTION_HEADER</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Renamed here to reduce verbosity in other sections</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">safe_encode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_encode</span>
+<span class="n">safe_decode</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">safe_decode</span>
+
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">docs</span><span class="o">.</span><span class="n">LOGGER_NAME</span> <span class="o">+</span> <span class="s">&#39;.base&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>For to_safe_filename</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s">&#39;win32&#39;</span><span class="p">:</span>
+  <span class="n">UNSAFE_FILE_CHARS</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">/:*?&quot;&lt;&gt;|&#39;</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="n">UNSAFE_FILE_CHARS</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Base error for Docs errors.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DocsError</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Class meant to be inherited by either DocsClientCL or DocsServiceCL.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">DocsBaseCL</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Marked with leading underscore because people should use the method
+for creating folders appropriate to the superclass.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_create_folder</span><span class="p">(</span><span class="n">folder_name</span><span class="p">,</span> <span class="n">folder_or_uri</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;_modify_entry must be defined!&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Edit a document.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">edit_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_entry_or_title</span><span class="p">,</span> <span class="n">editor</span><span class="p">,</span> <span class="n">file_ext</span><span class="p">,</span>
+               <span class="n">folder_entry_or_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Keyword arguments:
+  doc_entry_or_title: DocEntry of the existing document to edit,
+                      or title of the document to create.
+  editor: Name of the editor to use. Should be executable from the user's
+          working directory.
+  file_ext: Suffix of the file to download.
+            For example, "txt", "csv", "xcl".
+  folder_entry_or_path: Entry or string representing folder to upload into.
+               If a string, a new set of folders will ALWAYS be created.
+               For example, 'my_folder' to upload to my_folder,
+               'foo/bar' to upload into subfolder bar under folder foo.
+               Default None for root folder.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="kn">import</span> <span class="nn">tempfile</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">doc_title</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">doc_entry_or_title</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+      <span class="n">new_doc</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+      <span class="n">doc_title</span> <span class="o">=</span> <span class="n">doc_entry_or_title</span>
+      <span class="n">new_doc</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">temp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>If we're creating a new document and not given a folder entry</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">new_doc</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">folder_entry_or_path</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">folder_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">folder_entry_or_path</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Some systems allow more than one path separator</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">altsep</span><span class="p">:</span>
+        <span class="n">folder_path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">altsep</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+      <span class="n">base_folder</span> <span class="o">=</span> <span class="n">folder_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Define the base path such that upload_docs will create a folder
+named base_folder</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">base_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">)</span>
+      <span class="n">total_basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">)</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">total_basename</span><span class="p">)</span>
+      <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">total_basename</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">to_safe_filename</span><span class="p">(</span><span class="n">doc_title</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">file_ext</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">to_safe_filename</span><span class="p">(</span><span class="n">doc_title</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">file_ext</span><span class="p">)</span>
+      <span class="n">base_path</span> <span class="o">=</span> <span class="n">path</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">new_doc</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">Export</span><span class="p">(</span><span class="n">doc_entry_or_title</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+      <span class="n">file_hash</span> <span class="o">=</span> <span class="n">_md5_hash_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">file_hash</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">command_args</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="n">editor</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">command_args</span><span class="p">)</span>
+    <span class="n">impatient_editors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">SECTION_HEADER</span><span class="p">,</span>
+                                             <span class="s">&#39;impatient_editors&#39;</span><span class="p">,</span>
+                                             <span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">impatient_editors</span><span class="p">:</span>
+      <span class="n">impatient_editors</span> <span class="o">=</span> <span class="n">impatient_editors</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">command_args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">impatient_editors</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;I noticed you are using an application that will not wait for &#39;</span>
+                 <span class="s">&#39;you to finish editing your file.&#39;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Hit enter in this shell when you finished editing and saved &#39;</span>
+                 <span class="s">&#39;your work.&#39;</span><span class="p">)</span>
+        <span class="nb">raw_input</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">file_hash</span> <span class="ow">and</span> <span class="n">file_hash</span> <span class="o">==</span> <span class="n">_md5_hash_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;No modifications to file, not uploading.&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;No file written, not uploading.&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">new_doc</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">folder_entry_or_path</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Let code in upload_docs handle the creation of new folder(s)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">upload_docs</span><span class="p">([</span><span class="n">base_path</span><span class="p">],</span> <span class="n">doc_title</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>folder_entry_or_path is None or a GDataEntry.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">doc_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upload_single_doc</span><span class="p">(</span><span class="n">path</span><span class="p">,</span>
+                                           <span class="n">folder_entry</span><span class="o">=</span><span class="n">folder_entry_or_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">doc_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modify_entry</span><span class="p">(</span><span class="n">doc_entry_or_title</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_ext</span><span class="p">)</span>
+      <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="n">new_path</span> <span class="o">=</span> <span class="n">safe_move</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Moved edited document to &#39;</span> <span class="o">+</span>
+                             <span class="n">safe_decode</span><span class="p">(</span><span class="n">new_path</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">try</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>Good faith effort to keep the temp directory clean.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Only seen errors on Windows, but catch the more general OSError.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">doc_entry</span>
+
+  <span class="n">EditDoc</span> <span class="o">=</span> <span class="n">edit_doc</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Download documents.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_path</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">file_ext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Keyword arguments:
+  base_path: The path to download files to. This plus an entry's title plus
+             its format-specific extension will form the complete path.
+  entries: List of DocEntry items representing the files to download.
+  file_ext: Suffix to give the file(s) when downloading.
+            For example, "txt", "csv", "xcl". Default None to let
+            get_extension_from_doctype decide the extension. Ignored
+            when downloading arbitrary files.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">base_path</span><span class="p">):</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DocsError</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">u&#39;Specified multiple source files, but &#39;</span> <span class="o">+</span>
+                                    <span class="s">u&#39;destination &quot;&#39;</span> <span class="o">+</span> <span class="n">base_path</span> <span class="o">+</span>
+                                    <span class="s">u&#39;&quot; is not a directory&#39;</span><span class="p">))</span>
+      <span class="n">format_from_filename</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">get_extension_from_path</span><span class="p">(</span><span class="n">base_path</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">format_from_filename</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">file_ext</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Strip the extension off here if it exists. Don't want to double up
+on extension in for loop. (+1 for '.')</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">base_path</span> <span class="o">=</span> <span class="n">base_path</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">format_from_filename</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>We can just set the file_ext here, since there's only one file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">file_ext</span> <span class="o">=</span> <span class="n">format_from_filename</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Don't set file_ext if we cannot do export.
+get_extension_from_doctype will check the config file for 'format'
+which will set an undesired entry_file_ext for
+unconverted downloads</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="ow">not</span> <span class="n">file_ext</span> <span class="ow">and</span> <span class="n">can_export</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+        <span class="n">entry_file_ext</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">docs</span><span class="o">.</span><span class="n">get_extension_from_doctype</span><span class="p">(</span>
+                                         <span class="n">googlecl</span><span class="o">.</span><span class="n">docs</span><span class="o">.</span><span class="n">get_document_type</span><span class="p">(</span><span class="n">entry</span><span class="p">),</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">entry_file_ext</span> <span class="o">=</span> <span class="n">file_ext</span>
+      <span class="k">if</span> <span class="n">entry_file_ext</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Decided file_ext is &#39;</span> <span class="o">+</span> <span class="n">entry_file_ext</span><span class="p">)</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">entry_file_ext</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not (or would not) set file_ext&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">can_export</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+          <span class="n">extension</span> <span class="o">=</span> <span class="s">&#39;.txt&#39;</span>
+        <span class="k">else</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Files that cannot be exported typically have a file extension
+in their name / title.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>          <span class="n">extension</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+      <span class="n">entry_title</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">base_path</span><span class="p">):</span>
+        <span class="n">entry_title_safe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_safe_filename</span><span class="p">(</span><span class="n">entry_title</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="n">entry_title_safe</span> <span class="o">+</span> <span class="n">extension</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">base_path</span> <span class="o">+</span> <span class="n">extension</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Downloading &#39;</span> <span class="o">+</span> <span class="n">entry_title</span> <span class="o">+</span> <span class="s">&#39; to &#39;</span> <span class="o">+</span> <span class="n">path</span><span class="p">))</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">can_export</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">Export</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">Download</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+      <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Download of &#39;</span> <span class="o">+</span> <span class="n">entry_title</span> <span class="o">+</span> <span class="s">&#39; failed: &#39;</span> <span class="o">+</span>
+                              <span class="nb">unicode</span><span class="p">(</span><span class="n">err</span><span class="p">)))</span>
+      <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Does your destination filename contain invalid characters?&#39;</span><span class="p">)</span>
+
+  <span class="n">GetDocs</span> <span class="o">=</span> <span class="n">get_docs</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      <p>Modify the file data associated with a document entry.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_modify_entry</span><span class="p">(</span><span class="n">doc_entry</span><span class="p">,</span> <span class="n">path_to_new_content</span><span class="p">,</span> <span class="n">file_ext</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;_modify_entry must be defined!&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      <p>Translate string to something that can be safely used as a filename.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">to_safe_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Behavior of this function depends on the operating system.</p>
+<p>Args:
+  text: Text to check for invalid characters
+Returns:
+  Parameter with unsafe characters escaped or removed.
+  Type (unicode vs string)will match that of the parameter.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lazy_get</span><span class="p">(</span><span class="n">SECTION_HEADER</span><span class="p">,</span> <span class="s">&#39;invalid_filename_character_sub&#39;</span><span class="p">,</span>
+                               <span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">safe_decode</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">sub</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">UNSAFE_FILE_CHARS</span> <span class="k">else</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      <p>Upload a list of documents or directories.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">upload_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">folder_entry</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                  <span class="n">file_ext</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>For each item in paths:
+  if item is a directory, upload all files found in the directory
+    in a manner roughly equivalent to "cp -R directory/ <docs_folder>"
+  if item is a file, upload that file to <docs_folder></p>
+<p>Keyword arguments:
+  paths: List of file paths and/or directories to upload.
+  title: Title to give the files once uploaded.
+         Default None for the names of the files.
+  folder_entry: GDataEntry of the folder to treat as the new root for
+                directories/files.
+                Default None for no folder (the Google Docs root).
+  file_ext: Replace (or specify) the extension on the file when figuring
+          out the upload format. For example, 'txt' will upload the
+          file as if it was plain text. Default None for the file's
+          extension (which defaults to 'txt' if there is none).
+  kwargs: Typically contains 'convert', indicates if we should convert the
+          file on upload. False will only be honored if the user is a Google
+          Apps Premier account.</p>
+<p>Returns:
+  Dictionary mapping filenames to where they can be accessed online.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">doc_entries</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+      <span class="n">folder_root</span> <span class="o">=</span> <span class="n">folder_entry</span>
+      <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">folder_entries</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      <p>final '/' sets folder_name to '' which causes
+503 "Service Unavailable".</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+          <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+          <span class="n">folder_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">folder_entries</span><span class="p">:</span>
+            <span class="n">fentry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_folder</span><span class="p">(</span><span class="n">folder_name</span><span class="p">,</span> <span class="n">folder_entries</span><span class="p">[</span><span class="n">directory</span><span class="p">])</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="n">fentry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_folder</span><span class="p">(</span><span class="n">folder_name</span><span class="p">,</span> <span class="n">folder_root</span><span class="p">)</span>
+          <span class="n">folder_entries</span><span class="p">[</span><span class="n">dirpath</span><span class="p">]</span> <span class="o">=</span> <span class="n">fentry</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Created folder &#39;</span> <span class="o">+</span> <span class="n">dirpath</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">folder_name</span><span class="p">)</span>
+          <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upload_single_doc</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">fname</span><span class="p">),</span>
+                                         <span class="n">folder_entry</span><span class="o">=</span><span class="n">fentry</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
+              <span class="n">doc_entries</span><span class="p">[</span><span class="n">fname</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upload_single_doc</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                                     <span class="n">folder_entry</span><span class="o">=</span><span class="n">folder_entry</span><span class="p">,</span>
+                                     <span class="n">file_ext</span><span class="o">=</span><span class="n">file_ext</span><span class="p">,</span>
+                                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
+          <span class="n">doc_entries</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span> <span class="o">=</span> <span class="n">doc</span>
+    <span class="k">return</span> <span class="n">doc_entries</span>
+
+  <span class="n">UploadDocs</span> <span class="o">=</span> <span class="n">upload_docs</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      <p>Upload one file to Google Docs.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">upload_single_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">folder_entry</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">file_ext</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>Args:
+  path: str Path to file to upload.
+  title: str (optional) Title to give the upload. Defaults to the filename.
+  folder_entry: DocsEntry (optional) (sub)Folder to upload into.
+  file_ext: str (optional) Extension used to determine MIME type of
+      upload. If not specified, uses mimetypes module to guess it.
+  kwargs: Should contain value for 'convert', either True or False.
+      Indicates if upload should be converted. Only Apps Premier users can
+      specify False.</p>
+<p>Returns:
+  Entry corresponding to the document on Google Docs</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">convert</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;convert&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+      <span class="n">convert</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_ext</span><span class="p">:</span>
+      <span class="n">file_ext</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">get_extension_from_path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+      <span class="n">file_title</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">file_title</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_content_type</span><span class="p">(</span><span class="n">file_ext</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Could not find content type using gdata, trying mimetypes&#39;</span><span class="p">)</span>
+      <span class="kn">import</span> <span class="nn">mimetypes</span>
+      <span class="n">content_type</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">convert</span><span class="p">:</span>
+          <span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/plain&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;application/octet-stream&#39;</span>
+        <span class="n">entry_title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">filename</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">entry_title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">file_title</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">entry_title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">file_title</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Uploading with content type </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Loading </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">folder_entry</span><span class="p">:</span>
+      <span class="n">post_uri</span> <span class="o">=</span> <span class="n">folder_entry</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">src</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">post_uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DOCLIST_FEED_URI</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">convert</span><span class="p">:</span>
+      <span class="n">post_uri</span> <span class="o">+=</span> <span class="s">&#39;?convert=false&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">new_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transmit_doc</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">entry_title</span><span class="p">,</span> <span class="n">post_uri</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span>
+                                     <span class="n">file_ext</span><span class="p">)</span>
+    <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Failed to upload </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;ServiceForbiddenException&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span>
+          <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;Unsupported Media Type&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      <p>Attempt to catch older gdata users and warn them when they try to upload
+unsupported file types</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">Your version of python-gdata may not support this action. &quot;</span> 
+        <span class="k">print</span> <span class="s">&quot;Please see the wiki page for more details: &quot;</span>
+        <span class="k">print</span> <span class="s">&quot;http://code.google.com/p/googlecl/wiki/UploadingGoogleDocs</span><span class="se">\n\n</span><span class="s">&quot;</span>
+        <span class="k">if</span> <span class="n">convert</span><span class="p">:</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;You may have to specify a format with --format. Try &#39;</span> <span class="o">+</span>
+                   <span class="s">&#39;--format=txt&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Upload success! Direct link: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+               <span class="n">new_entry</span><span class="o">.</span><span class="n">GetAlternateLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_entry</span>
+
+  <span class="n">UploadSingleDoc</span> <span class="o">=</span> <span class="n">upload_single_doc</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      <p>Read size is 128*20 for no good reason.
+Just want to avoid reading in the whole file, and read in a multiple of 128.
+Return a binary md5 checksum of file at path.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_md5_hash_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">read_size</span><span class="o">=</span><span class="mi">2560</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-35'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-35'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="kn">import</span> <span class="nn">hashlib</span>
+  <span class="n">hash_function</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
+  <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">my_file</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">my_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_size</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">data</span><span class="p">:</span>
+      <span class="n">hash_function</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="n">my_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_size</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">hash_function</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-36'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-36'>#</a>
+      </div>
+      <p>See if the given entry can be exported.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">can_export</span><span class="p">(</span><span class="n">entry_or_url</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-37'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-37'>#</a>
+      </div>
+      <p>Based off check done in gdata.docs.client.DocsClient.export</p>
+<p>Returns:
+  True if entry can be exported to a specific format (can use client.export)
+  False if not (must use client.Download)</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry_or_url</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">entry_or_url</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">entry_or_url</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">src</span>
+  <span class="n">can_export</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;/Export?&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="k">return</span> <span class="n">can_export</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-38'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-38'>#</a>
+      </div>
+      <p>Move file from src to dst.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">safe_move</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-39'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-39'>#</a>
+      </div>
+      <p>If file with same name already exists at dst, rename the new file
+while preserving the extension.</p>
+<p>Returns:
+  path to new file.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="n">new_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+  <span class="n">ext</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">get_extension_from_path</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">ext</span><span class="p">:</span>
+    <span class="n">dotted_ext</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">dotted_ext</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">ext</span>
+  <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">src</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">dotted_ext</span><span class="p">)</span>
+  <span class="n">rename_num</span> <span class="o">=</span> <span class="mi">1</span>
+  <span class="n">new_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_dir</span><span class="p">,</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">dotted_ext</span><span class="p">)</span>
+  <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">new_path</span><span class="p">):</span>
+    <span class="n">new_filename</span> <span class="o">=</span> <span class="n">filename</span> <span class="o">+</span> <span class="s">&#39;-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rename_num</span><span class="p">)</span> <span class="o">+</span> <span class="n">dotted_ext</span>
+    <span class="n">new_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_dir</span><span class="p">,</span> <span class="n">new_filename</span><span class="p">)</span>
+  <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">new_path</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

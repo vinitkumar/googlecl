@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>service.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id="background"></div>
+<div id='container'>
+  <div class='section'>
+    <div class='docs'><h1>service.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Copyright (C) 2010 Google Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<pre><code> http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Service details and instances for the Blogger service.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&#39;tom.h.miller@gmail.com (Tom Miller)&#39;</span>
+<span class="kn">import</span> <span class="nn">atom</span>
+<span class="kn">import</span> <span class="nn">gdata</span>
+<span class="kn">import</span> <span class="nn">gdata.blogger</span>
+<span class="kn">import</span> <span class="nn">gdata.blogger.service</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">googlecl</span> <span class="kn">import</span> <span class="n">safe_encode</span>
+<span class="kn">import</span> <span class="nn">googlecl.base</span>
+<span class="kn">import</span> <span class="nn">googlecl.service</span>
+<span class="kn">from</span> <span class="nn">googlecl.blogger</span> <span class="kn">import</span> <span class="n">SECTION_HEADER</span>
+
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">googlecl</span><span class="o">.</span><span class="n">blogger</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Command-line-friendly service for the Blogger API.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">BloggerServiceCL</span><span class="p">(</span><span class="n">gdata</span><span class="o">.</span><span class="n">blogger</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BloggerService</span><span class="p">,</span>
+                       <span class="n">googlecl</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BaseServiceCL</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Some of this is based off gdata/samples/blogger/BloggerExampleV1.py</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Constructor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">gdata</span><span class="o">.</span><span class="n">blogger</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BloggerService</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account_type</span><span class="o">=</span><span class="s">&#39;GOOGLE&#39;</span><span class="p">)</span>
+    <span class="n">googlecl</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BaseServiceCL</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SECTION_HEADER</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Uploads content.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_upload_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post_title</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">blog_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_draft</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Keyword arguments:
+  blog_title: Title of the blog to post to.
+  title: Title to give the post.
+  content: String to get posted. This may be contents from a file, but NOT
+           the path itself!
+  is_draft: If this content is a draft post or not. (Default False)</p>
+<p>Returns:
+  Entry of post. (Returns same results as self.AddPost())</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">entry</span> <span class="o">=</span> <span class="n">gdata</span><span class="o">.</span><span class="n">blogger</span><span class="o">.</span><span class="n">BlogPostEntry</span><span class="p">()</span>
+    <span class="n">entry</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Title</span><span class="p">(</span><span class="n">title_type</span><span class="o">=</span><span class="s">&#39;xhtml&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">post_title</span><span class="p">)</span>
+    <span class="n">entry</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Content</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s">&#39;html&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_draft</span><span class="p">:</span>
+      <span class="n">control</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Control</span><span class="p">()</span>
+      <span class="n">control</span><span class="o">.</span><span class="n">draft</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">Draft</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s">&#39;yes&#39;</span><span class="p">)</span>
+      <span class="n">entry</span><span class="o">.</span><span class="n">control</span> <span class="o">=</span> <span class="n">control</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">AddPost</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">blog_id</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Return the blog ID of the blog that matches blog_title.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">_get_blog_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blog_title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Keyword arguments:
+  blog_title: Name or title of the blog.
+  user_id: Profile ID of blog's owner as seen in the profile view URL.
+          Default 'default' for the authenticated user.</p>
+<p>Returns:
+  Blog ID (blog_entry.GetSelfLink().href.split('/')[-1]) if a blog is
+  found matching the user and blog_title. None otherwise.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">blog_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetSingleEntry</span><span class="p">(</span><span class="s">&#39;/feeds/&#39;</span> <span class="o">+</span> <span class="n">user_id</span> <span class="o">+</span> <span class="s">&#39;/blogs&#39;</span><span class="p">,</span> <span class="n">blog_title</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">blog_entry</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">blog_entry</span><span class="o">.</span><span class="n">GetSelfLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">blog_title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Did not find a blog with title matching </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">blog_title</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;No blogs found!&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">None</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Check that the token being used is valid.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">is_token_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_uri</span><span class="o">=</span><span class="s">&#39;/feeds/default/blogs&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BaseServiceCL</span><span class="o">.</span><span class="n">IsTokenValid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_uri</span><span class="p">)</span>
+
+  <span class="n">IsTokenValid</span> <span class="o">=</span> <span class="n">is_token_valid</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      <p>Get entries for posts that match a title.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">get_posts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blog_title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">post_titles</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Keyword arguments:
+  blog_title: Name or title of the blog the post is in. (Default None)
+  post_titles: string or list Titles that the posts should have.
+               Default None, for all posts
+  user_id: Profile ID of blog's owner as seen in the profile view URL.
+          (Default 'default' for authenticated user)</p>
+<p>Returns:
+  List of posts that match parameters, or [] if none do.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">blog_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_blog_id</span><span class="p">(</span><span class="n">blog_title</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">blog_id</span><span class="p">:</span>
+      <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/feeds/&#39;</span> <span class="o">+</span> <span class="n">blog_id</span> <span class="o">+</span> <span class="s">&#39;/posts/default&#39;</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetEntries</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">post_titles</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">[]</span>
+
+  <span class="n">GetPosts</span> <span class="o">=</span> <span class="n">get_posts</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      <p>Add or remove labels on a list of posts.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">label_posts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post_entries</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Keyword arguments:
+  post_entries: List of post entry objects.
+  tags: String representation of tags in a comma separated list.
+        For how tags are generated from the string,
+        see googlecl.base.generate_tag_sets().</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">scheme</span> <span class="o">=</span> <span class="s">&#39;http://www.blogger.com/atom/ns#&#39;</span>
+    <span class="n">remove_set</span><span class="p">,</span> <span class="n">add_set</span><span class="p">,</span> <span class="n">replace_tags</span> <span class="o">=</span> <span class="n">googlecl</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">generate_tag_sets</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+    <span class="n">successes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">post</span> <span class="ow">in</span> <span class="n">post_entries</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <p>No point removing tags if we're replacing all of them.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>      <span class="k">if</span> <span class="n">remove_set</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">replace_tags</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Keep categories if they meet one of two criteria:
+1) Are of a different scheme than the one we're looking at, or
+2) Are of the same scheme, but the term is in the 'remove' set</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">post</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">post</span><span class="o">.</span><span class="n">category</span> \
+                          <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">scheme</span> <span class="o">!=</span> <span class="n">scheme</span> <span class="ow">or</span> \
+                          <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="n">scheme</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">term</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">remove_set</span><span class="p">)]</span>
+
+      <span class="k">if</span> <span class="n">replace_tags</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      <p>Remove categories that match the scheme we are updating.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">post</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">post</span><span class="o">.</span><span class="n">category</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">scheme</span> <span class="o">!=</span> <span class="n">scheme</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">add_set</span><span class="p">:</span>
+        <span class="n">new_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">Category</span><span class="p">(</span><span class="n">term</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="n">scheme</span><span class="p">)</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">add_set</span><span class="p">]</span>
+        <span class="n">post</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_tags</span><span class="p">)</span>
+      <span class="n">updated_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UpdatePost</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">updated_post</span><span class="p">:</span>
+        <span class="n">successes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">updated_post</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">successes</span>
+
+  <span class="n">LabelPosts</span> <span class="o">=</span> <span class="n">label_posts</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Uploads posts.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>  <span class="k">def</span> <span class="nf">upload_posts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_list</span><span class="p">,</span> <span class="n">blog_title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">post_title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                   <span class="n">is_draft</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Args:
+  content_list: List of filenames or content to upload.
+  blog_title: Name of the blog to upload to.
+  post_title: Name to give the post(s).
+  is_draft: Set True to upload as private draft(s), False to make upload(s)
+      public.</p>
+<p>Returns:
+  List of entries of successful posts.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">max_size</span> <span class="o">=</span> <span class="mi">500000</span>
+    <span class="n">entry_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">blog_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_blog_id</span><span class="p">(</span><span class="n">blog_title</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">blog_id</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">content_string</span> <span class="ow">in</span> <span class="n">content_list</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">content_string</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">content_string</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">content_file</span><span class="p">:</span>
+          <span class="n">content</span> <span class="o">=</span> <span class="n">content_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">max_size</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">content_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Only read first </span><span class="si">%s</span><span class="s"> bytes of file </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">max_size</span><span class="p">,</span> <span class="n">content_string</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">post_title</span><span class="p">:</span>
+          <span class="n">title</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">content_string</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">post_title</span><span class="p">:</span>
+          <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;New post&#39;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">content_string</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_upload_content</span><span class="p">(</span><span class="n">post_title</span> <span class="ow">or</span> <span class="n">title</span><span class="p">,</span>
+                                     <span class="n">content</span><span class="p">,</span>
+                                     <span class="n">blog_id</span><span class="o">=</span><span class="n">blog_id</span><span class="p">,</span>
+                                     <span class="n">is_draft</span><span class="o">=</span><span class="n">is_draft</span><span class="p">)</span>
+      <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_error</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">safe_encode</span><span class="p">(</span><span class="s">&#39;Failed to post: &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">err</span><span class="p">)))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">entry_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">control</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">draft</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s">&#39;yes&#39;</span><span class="p">:</span>
+          <span class="n">html_link</span> <span class="o">=</span> <span class="n">_build_draft_html</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">html_link</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">GetHtmlLink</span><span class="p">()</span><span class="o">.</span><span class="n">href</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Post created: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">html_link</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entry_list</span>
+
+  <span class="n">UploadPosts</span> <span class="o">=</span> <span class="n">upload_posts</span>
+
+
+<span class="n">SERVICE_CLASS</span> <span class="o">=</span> <span class="n">BloggerServiceCL</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">_build_draft_html</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+  <span class="n">template</span> <span class="o">=</span> <span class="s">&#39;http://www.blogger.com/post-edit.g?blogID=</span><span class="si">%s</span><span class="s">&amp;postID=</span><span class="si">%s</span><span class="s">&#39;</span>
+  <span class="k">return</span> <span class="n">template</span> <span class="o">%</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">GetBlogId</span><span class="p">(),</span> <span class="n">entry</span><span class="o">.</span><span class="n">GetPostId</span><span class="p">())</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
