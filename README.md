@@ -33,7 +33,7 @@ understand the existing code.
 - Follow the same styleguide and naming conventions as present in the
 code.
 - Follow [github flow] (http://guides.github.com/overviews/flow/), It is
-a dead simple way to deal with git way development and I prefer it.
+a dead simple way to deal with development using and I prefer it.
 - Branch naming could be issue related. Say there is issue #23, create a
 branch name feature/fix-issue23 or bugfix/issue23. It would really help.
 
