@@ -2,8 +2,7 @@
 
 [![Downloads](https://pypip.in/d/google_cl/badge.png)](https://crate.io/package/google_cl)
 
-GoogleCL is a command line utility to use google services like youtube
-blogger etc.
+GoogleCL is a command line utility to use google services like youtube, blogger etc.
 
 It was built by Tom H. Miller from Google. Originally the project
 was hosted here [googlecl](https://code.google.com/p/googlecl/). Since
