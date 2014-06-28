@@ -4,11 +4,10 @@
 
 GoogleCL is a command line utility to use google services like youtube, blogger etc.
 
-It was built by Tom H. Miller from Google. Originally the project
-was hosted here([googlecl](https://code.google.com/p/googlecl/)). Since
-there is no development going there, I forked the project to
-github to pace up development.
+It was developed by Mr.Tom H. Miller from Google and was hosted 
+here([googlecl](https://code.google.com/p/googlecl/)). 
 
+This is a fork of the above project to keep the development up and running. 
 
 ## Installation
 
@@ -35,6 +34,5 @@ code.
 a dead simple way to deal with development using and I prefer it.
 - Branch naming could be issue related. Say there is issue #23, create a
 branch name feature/fix-issue23 or bugfix/issue23. It would really help.
-
 
 Thanks!
