@@ -2,3 +2,4 @@ build/
 dist/
 google_cl.egg-info/
 .idea
+*.pyc
