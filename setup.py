@@ -76,7 +76,7 @@ setup(name="google_cl",
       packages=packages,
       package_dir={'googlecl':'src/googlecl'},
       scripts=[SCRIPT_TO_INSTALL],
-      install_requires=['gdata ==2.0.18'],
+      install_requires=['gdata ==2.0.18', 'oauth2client==1.4.11'],
       long_description=long_desc,
       classifiers=[
           'Topic :: Internet :: WWW/HTTP',
