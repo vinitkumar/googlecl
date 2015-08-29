@@ -43,7 +43,8 @@ def authenticate():
            client_file = os.path.join(os.path.expanduser('~'), CLIENT_SECRET_FILE)
            flow = client.flow_from_clientsecrets(
                    client_file,
-                   scope='',
+                   # add all the scopes below in comma separated strings
+                   scope='https://www.googleapis.com/auth/blogger, https://www.googleapis.com/auth/calendar, https://www.google.com/m8/feeds/ , https://picasaweb.google.com/data/, https://www.googleapis.com/auth/youtube'
                    redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
            auth_uri = flow.step1_get_authorize_url()
