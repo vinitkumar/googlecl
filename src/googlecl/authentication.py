@@ -30,29 +30,31 @@ LOG = logging.getLogger(LOGGER_NAME)
 
 # Make Auth Oauth2 compatible.
 def authenticate():
-   filename = os.path.join(os.path.expanduser('~'), CONF_FILE_NAME)
+  filename = os.path.join(os.path.expanduser('~'), CONF_FILE_NAME)
 
-   storage = Storage(filename)
-   credentials = storage.get()
+  storage = Storage(filename)
+  credentials = storage.get()
 
-   if credentials is None or credentials.invalid:
-       if CLIENT_SECRET_FILE is None:
-           print 'Please save and download the client secret file from your app console and try again!'
-           return
-       else:
-           client_file = os.path.join(os.path.expanduser('~'), CLIENT_SECRET_FILE)
-           flow = client.flow_from_clientsecrets(
-                   client_file,
-                   # add all the scopes below in comma separated strings
-                   scope='https://www.googleapis.com/auth/blogger, https://www.googleapis.com/auth/calendar, https://www.google.com/m8/feeds/ , https://picasaweb.google.com/data/, https://www.googleapis.com/auth/youtube'
-                   redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+  if credentials is None or credentials.invalid:
+    if CLIENT_SECRET_FILE is None:
+      print 'Please save and download the client secret file from your app console and try again!'
+      return
+    else:
+     client_file = os.path.join(os.path.expanduser('~'), CLIENT_SECRET_FILE)
+     flow = client.flow_from_clientsecrets(
+             client_file,
+             # add all the scopes below in comma separated strings
+             # following scopes are tested and they work. Find out the cause of 
+             # invalid scopes and other issues
+             scope='https://www.google.com/m8/feeds/, https://picasaweb.google.com/data/, https://www.googleapis.com/auth/youtube', https://www.googleapis.com/auth/youtube'
+             redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
-           auth_uri = flow.step1_get_authorize_url()
-           auth_code = raw_input('Enter the auth code: ')
-           credentials = flow.step2_exchange(auth_code)
-           storage.put(credentials)
-    if credentials.access_token_expired:
-        credentials.refresh(httplib2.Http())
+     auth_uri = flow.step1_get_authorize_url()
+     auth_code = raw_input('Enter the auth code: ')
+     credentials = flow.step2_exchange(auth_code)
+     storage.put(credentials)
+  if credentials.access_token_expired:
+    credentials.refresh(httplib2.Http())
 
 
 
