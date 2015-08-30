@@ -20,10 +20,10 @@ import os
 import pickle
 import stat
 import googlecl
-import oauth2client import client
+from oauth2client import client
 
 CONF_FILE_NAME = '.googlecl.conf'
-CLIENT_SECRET_FILE = os.env.get('CLIENT_SECRET_FILE')
+CLIENT_SECRET_FILE = os.environ.get('CLIENT_SECRET_FILE')
 LOGGER_NAME = __name__
 LOG = logging.getLogger(LOGGER_NAME)
 
@@ -46,7 +46,7 @@ def authenticate():
              # add all the scopes below in comma separated strings
              # following scopes are tested and they work. Find out the cause of 
              # invalid scopes and other issues
-             scope='https://www.google.com/m8/feeds/, https://picasaweb.google.com/data/, https://www.googleapis.com/auth/youtube', https://www.googleapis.com/auth/youtube'
+             scope='https://www.google.com/m8/feeds/, https://picasaweb.google.com/data/, https://www.googleapis.com/auth/youtube, https://www.googleapis.com/auth/youtube',
              redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
      auth_uri = flow.step1_get_authorize_url()
