@@ -54,7 +54,6 @@ import webbrowser
 import googlecl
 import googlecl.authentication
 import googlecl.config
-from oauth2client.client import OAuth2WebServerFlow
 try: # Fails if Discovery stuff is unavailable
  from googlecl.discovery import DiscoveryManager
  apis = True
@@ -117,8 +116,6 @@ class Error():
   pass
 
 
-# TODO: This is outdated, replace it with this code.
-# https://developers.google.com/api-client-library/python/guide/aaa_oauth
 def authenticate(auth_manager, options, config, section_header):
   """Set a (presumably valid) OAuth token for the client to use.
 
@@ -131,69 +128,58 @@ def authenticate(auth_manager, options, config, section_header):
   Returns:
     True if authenticated, False otherwise.
   """
-  client_id = os.environ.get('CLIENT_ID')
-  client_secret = os.environ.get('CLIENT_SECRET')
-  flow = OAuth2WebServerFlow(client_id=client_id, 
-                            client_secret=client_secret,
-                            scope='https://www.googleapis.com/auth/calendar',
-                            redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-  
-  # TODO: open this URI in webbrowser and copy the code which is 
-  # saved to the config file.
-  auth_uri = flow.step1_get_authorize_url() 
-  # TODO: below code will be completly replaced.
   # Only try to set the access token if we're not forced to authenticate.
   # XXX: logic in here is iffy. Don't bother checking access token if it's not
   # set
-  # if not options.force_auth:
-  #   set_token = auth_manager.set_access_token()
-  #   if set_token:
-  #     LOG.debug('Successfully set token')
-  #     skip_auth = (options.skip_auth or
-  #                  config.lazy_get(section_header, 'skip_auth',
-  #                                  default=False, option_type=bool))
-  #   else:
-  #     LOG.debug('Failed to set token!')
-  #     skip_auth = False
-  # else:
-  #   LOG.debug('Forcing retrieval of new token')
-  #   skip_auth = False
+  if not options.force_auth:
+    set_token = auth_manager.set_access_token()
+    if set_token:
+      LOG.debug('Successfully set token')
+      skip_auth = (options.skip_auth or
+                   config.lazy_get(section_header, 'skip_auth',
+                                   default=False, option_type=bool))
+    else:
+      LOG.debug('Failed to set token!')
+      skip_auth = False
+  else:
+    LOG.debug('Forcing retrieval of new token')
+    skip_auth = False
 
-  # if options.force_auth or not skip_auth:
-  #   LOG.debug('Checking access token...')
-  #   valid_token = auth_manager.check_access_token()
-  #   if not valid_token:
-  #     display_name = auth_manager.get_display_name(options.hostid)
-  #     browser_str = config.lazy_get(section_header, 'auth_browser',
-  #                                   default=None)
-  #     if browser_str:
-  #       if browser_str.lower() == 'disabled' or browser_str.lower() == 'none':
-  #         browser = None
-  #       else:
-  #         try:
-  #           browser = webbrowser.get(browser_str)
-  #         except webbrowser.Error, err:
-  #           LOG.warn(safe_encode(u'Could not get browser "%s": %s' %
-  #                                (browser_str, err)))
-  #           browser = None
-  #     else:
-  #       try:
-  #         browser = webbrowser.get()
-  #       except webbrowser.Error, err:
-  #         LOG.warn(safe_encode(u'Could not get default browser: %s' % err))
-  #         browser = None
+  if options.force_auth or not skip_auth:
+    LOG.debug('Checking access token...')
+    valid_token = auth_manager.check_access_token()
+    if not valid_token:
+      display_name = auth_manager.get_display_name(options.hostid)
+      browser_str = config.lazy_get(section_header, 'auth_browser',
+                                    default=None)
+      if browser_str:
+        if browser_str.lower() == 'disabled' or browser_str.lower() == 'none':
+          browser = None
+        else:
+          try:
+            browser = webbrowser.get(browser_str)
+          except webbrowser.Error, err:
+            LOG.warn(safe_encode(u'Could not get browser "%s": %s' %
+                                 (browser_str, err)))
+            browser = None
+      else:
+        try:
+          browser = webbrowser.get()
+        except webbrowser.Error, err:
+          LOG.warn(safe_encode(u'Could not get default browser: %s' % err))
+          browser = None
 
-  #     valid_token = auth_manager.retrieve_access_token(display_name, browser)
-  #   if valid_token:
-  #     LOG.debug('Retrieved valid access token')
-  #     config.set_missing_default(section_header, 'skip_auth', True)
-  #     return True
-  #   else:
-  #     LOG.debug('Could not retrieve valid access token')
-  #     return False
-  # else:
-  #   # Already set an access token and we're not being forced to authenticate
-  #   return True
+      valid_token = auth_manager.retrieve_access_token(display_name, browser)
+    if valid_token:
+      LOG.debug('Retrieved valid access token')
+      config.set_missing_default(section_header, 'skip_auth', True)
+      return True
+    else:
+      LOG.debug('Could not retrieve valid access token')
+      return False
+  else:
+    # Already set an access token and we're not being forced to authenticate
+    return True
 
 
 # I don't know if this and shlex.split() can replace expand_as_command_line
