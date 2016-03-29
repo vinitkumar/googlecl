@@ -42,57 +42,57 @@ class ContactsServiceCL(gdata.contacts.service.ContactsService,
                         googlecl.contacts.base.ContactsBaseCL,
                         googlecl.service.BaseServiceCL):
 
-  """Extends gdata.contacts.service.ContactsService for the command line.
+    """Extends gdata.contacts.service.ContactsService for the command line.
 
-  This class adds some features focused on using Contacts via an installed
-  app with a command line interface.
+    This class adds some features focused on using Contacts via an installed
+    app with a command line interface.
 
-  """
+    """
 
-  def __init__(self, config):
-    """Constructor."""
-    gdata.contacts.service.ContactsService.__init__(self)
-    googlecl.service.BaseServiceCL.__init__(self, SECTION_HEADER, config)
+    def __init__(self, config):
+        """Constructor."""
+        gdata.contacts.service.ContactsService.__init__(self)
+        googlecl.service.BaseServiceCL.__init__(self, SECTION_HEADER, config)
 
-  def _add_email(self, email, contact_entry):
-    contact_entry.email.append(gdata.contacts.Email(address=email))
+    def _add_email(self, email, contact_entry):
+        contact_entry.email.append(gdata.contacts.Email(address=email))
 
-  def _add_name(self, name, contact_entry):
-    contact_entry.title = atom.Title(text=name)
+    def _add_name(self, name, contact_entry):
+        contact_entry.title = atom.Title(text=name)
 
-  def _get_contact_entry(self):
-    return gdata.contacts.ContactEntry() 
+    def _get_contact_entry(self):
+        return gdata.contacts.ContactEntry()
 
-  def get_contacts(self, name):
-    """Get all contacts that match a name."""
-    uri = self.GetFeedUri()
-    return self.GetEntries(uri, name,
-                           converter=gdata.contacts.ContactsFeedFromString)
+    def get_contacts(self, name):
+        """Get all contacts that match a name."""
+        uri = self.GetFeedUri()
+        return self.GetEntries(uri, name,
+                               converter=gdata.contacts.ContactsFeedFromString)
 
-  GetContacts = get_contacts
+    GetContacts = get_contacts
 
-  def add_group(self, name):
-    """Add group."""
-    new_group = gdata.contacts.GroupEntry(title=atom.Title(text=name))
-    return self.CreateGroup(new_group)
+    def add_group(self, name):
+        """Add group."""
+        new_group = gdata.contacts.GroupEntry(title=atom.Title(text=name))
+        return self.CreateGroup(new_group)
 
-  AddGroup = add_group
+    AddGroup = add_group
 
-  def get_groups(self, name):
-    """Get all groups that match a name."""
-    uri = self.GetFeedUri(kind='groups')
-    return self.GetEntries(uri, name,
-                           converter=gdata.contacts.GroupsFeedFromString)
+    def get_groups(self, name):
+        """Get all groups that match a name."""
+        uri = self.GetFeedUri(kind='groups')
+        return self.GetEntries(uri, name,
+                               converter=gdata.contacts.GroupsFeedFromString)
 
-  GetGroups = get_groups
+    GetGroups = get_groups
 
-  def is_token_valid(self, test_uri=None):
-    """Check that the token being used is valid."""
-    if not test_uri:
-      test_uri = self.GetFeedUri()
-    return googlecl.base.BaseCL.IsTokenValid(self, test_uri)
+    def is_token_valid(self, test_uri=None):
+        """Check that the token being used is valid."""
+        if not test_uri:
+            test_uri = self.GetFeedUri()
+        return googlecl.base.BaseCL.IsTokenValid(self, test_uri)
 
-  IsTokenValid = is_token_valid
+    IsTokenValid = is_token_valid
 
 
 SERVICE_CLASS = ContactsServiceCL

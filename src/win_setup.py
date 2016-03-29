@@ -22,6 +22,6 @@ import py2exe
 packages = ['googlecl', 'gdata', 'atom']
 
 setup(console=['google'],
-      options={"py2exe":{"optimize": 2,
-                         "packages": packages}}
-     )
+      options={"py2exe": {"optimize": 2,
+                          "packages": packages}}
+      )

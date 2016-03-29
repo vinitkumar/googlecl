@@ -34,57 +34,57 @@ LOG = logging.getLogger(googlecl.contacts.LOGGER_NAME + '.base')
 
 
 class ContactsBaseCL(object):
-  """Class inherited by either ContactsServiceCL or ContactsClientCL. """
+    """Class inherited by either ContactsServiceCL or ContactsClientCL. """
 
-  def add_contacts(self, contacts):
-    """Add contact(s).
+    def add_contacts(self, contacts):
+        """Add contact(s).
 
-    Args:
-      contacts: Contact(s) to add. This is either a path to a CSV with
-          contact information, or a list of comma separated contact data.
-    """
-    successes = []
-    for contact in contacts:
-      if os.path.exists(contact):
-        with open(contact, 'r') as contacts_csv_file:
-          for line in contacts_csv_file:
-            entry = self.add_single_contact(line)
-            if entry:
-              successes.append(entry)
-      else:
-        entry = self.add_single_contact(contact)
-        if entry:
-          successes.append(entry)
-    return successes
+        Args:
+          contacts: Contact(s) to add. This is either a path to a CSV with
+              contact information, or a list of comma separated contact data.
+        """
+        successes = []
+        for contact in contacts:
+            if os.path.exists(contact):
+                with open(contact, 'r') as contacts_csv_file:
+                    for line in contacts_csv_file:
+                        entry = self.add_single_contact(line)
+                        if entry:
+                            successes.append(entry)
+            else:
+                entry = self.add_single_contact(contact)
+                if entry:
+                    successes.append(entry)
+        return successes
 
-  AddContacts = add_contacts
+    AddContacts = add_contacts
 
-  def add_single_contact(self, contact_string, delimiter=',',
-                         fields=('name', 'email')):
-    """Add contact.
+    def add_single_contact(self, contact_string, delimiter=',',
+                           fields=('name', 'email')):
+        """Add contact.
 
-    Args:
-      contact_string: String representing fields of a contact to add.
-      delimiter: Delimiter for fields in the contact string. Default ','
-      fields: Fields contained in the contact string. Default ('name', 'email')
+        Args:
+          contact_string: String representing fields of a contact to add.
+          delimiter: Delimiter for fields in the contact string. Default ','
+          fields: Fields contained in the contact string. Default ('name', 'email')
 
-    Returns:
-      ContactEntry with fields filled in, or None if the contact string did not
-      contain the data described by fields.
-    """
-    num_fields = len(fields)
-    values = contact_string.split(delimiter, num_fields)
-    if num_fields != len(values):
-      LOG.error('String did not have correct number of fields!')
-      LOG.debug('Expected fields %s', fields)
-      LOG.debug('Got string %s', contact_string)
-      return None
-    new_contact = self._get_contact_entry()
-    for i in range(num_fields):
-      if fields[i] == 'name':
-        self._add_name(values[i].strip(), new_contact)
-      elif fields[i] == 'email':
-        self._add_email(values[i].strip(), new_contact)
-    return self.CreateContact(new_contact)
+        Returns:
+          ContactEntry with fields filled in, or None if the contact string did not
+          contain the data described by fields.
+        """
+        num_fields = len(fields)
+        values = contact_string.split(delimiter, num_fields)
+        if num_fields != len(values):
+            LOG.error('String did not have correct number of fields!')
+            LOG.debug('Expected fields %s', fields)
+            LOG.debug('Got string %s', contact_string)
+            return None
+        new_contact = self._get_contact_entry()
+        for i in range(num_fields):
+            if fields[i] == 'name':
+                self._add_name(values[i].strip(), new_contact)
+            elif fields[i] == 'email':
+                self._add_email(values[i].strip(), new_contact)
+        return self.CreateContact(new_contact)
 
-  AddSingleContact = add_single_contact
+    AddSingleContact = add_single_contact

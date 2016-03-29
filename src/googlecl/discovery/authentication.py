@@ -32,33 +32,34 @@ LOG = logging.getLogger(googlecl.LOGGER_NAME)
 
 TOKENS_FILENAME_FORMAT = 'dca_%s_%s'
 
+
 def authenticate(email, servicename, doc, http, client_id,
                  client_secret, force_auth=False):
-  """ Authenticates an provided http object,
-  Prompts for user confirmation if necessary, and stores the credentials
+    """ Authenticates an provided http object,
+    Prompts for user confirmation if necessary, and stores the credentials
 
-  Args:
-    email: The email address of the user
-    servicename: The service which requires authentication
-    doc: Documentation for the service (for determining scopes)
-    http: The object being authenticated
+    Args:
+      email: The email address of the user
+      servicename: The service which requires authentication
+      doc: Documentation for the service (for determining scopes)
+      http: The object being authenticated
 
-  Returns:
-    The authorized object
-  """
-  tokens_path = googlecl.get_data_path(TOKENS_FILENAME_FORMAT %
-                                     (email, servicename),
-                                     create_missing_dir=True)
-  storage = Storage(tokens_path)
-  credentials = storage.get()
-  if credentials is None or credentials.invalid or force_auth:
-    # Works with google-api-python-client-1.0beta2, but not with
-    # beta4.  They're working on a way to allow deleting credentials.
-    #storage.put(None)
-    desiredcred = ""
-    for arg in doc['auth']['oauth2']['scopes']:
-      desiredcred = desiredcred + arg + ' '
-    FLOW = OAuth2WebServerFlow(client_id, client_secret,
-      scope=desiredcred, user_agent='discoverycl')
-    credentials = run(FLOW, storage)
-  return credentials.authorize(http)
+    Returns:
+      The authorized object
+    """
+    tokens_path = googlecl.get_data_path(TOKENS_FILENAME_FORMAT %
+                                         (email, servicename),
+                                         create_missing_dir=True)
+    storage = Storage(tokens_path)
+    credentials = storage.get()
+    if credentials is None or credentials.invalid or force_auth:
+        # Works with google-api-python-client-1.0beta2, but not with
+        # beta4.  They're working on a way to allow deleting credentials.
+        # storage.put(None)
+        desiredcred = ""
+        for arg in doc['auth']['oauth2']['scopes']:
+            desiredcred = desiredcred + arg + ' '
+        FLOW = OAuth2WebServerFlow(client_id, client_secret,
+                                   scope=desiredcred, user_agent='discoverycl')
+        credentials = run(FLOW, storage)
+    return credentials.authorize(http)
