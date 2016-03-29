@@ -3,3 +3,4 @@ dist/
 google_cl.egg-info/
 .idea
 *.pyc
+src/google
