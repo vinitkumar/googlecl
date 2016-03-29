@@ -32,5 +32,6 @@ function GetGooglePythonIndent(lnum)
 
 endfunction
 
+autocmd FileType python setlocal expandtab sw=2 ts=2 sts=2
 let pyindent_nested_paren="&sw*2"
 let pyindent_open_paren="&sw*2"
