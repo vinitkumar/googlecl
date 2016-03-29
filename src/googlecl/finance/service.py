@@ -62,187 +62,188 @@ from googlecl.finance import SECTION_HEADER
 from gdata.service import RequestError
 from gdata.finance.service import FinanceService, PortfolioQuery, PositionQuery
 from gdata.finance import PortfolioData, PortfolioEntry, TransactionEntry, \
-                          TransactionData, Money, Price, Commission, \
-                          PortfolioFeedFromString
+    TransactionData, Money, Price, Commission, \
+    PortfolioFeedFromString
 
 LOG = logging.getLogger(googlecl.finance.LOGGER_NAME)
 
+
 class FinanceServiceCL(FinanceService, BaseServiceCL):
 
-  """Extends gdata.photos.service.FinanceService for the command line.
+    """Extends gdata.photos.service.FinanceService for the command line.
 
-  This class adds some features focused on using Finance via an installed app
-  with a command line interface.
+    This class adds some features focused on using Finance via an installed app
+    with a command line interface.
 
-  """
-
-  def __init__(self, config):
-    """Constructor."""
-    FinanceService.__init__(self)
-    BaseServiceCL.__init__(self, SECTION_HEADER, config)
-    self.max_results = None
-
-  def create_portfolio(self, title, currency):
-    """Creates a portfolio.
-
-    Args:
-      title: Title to give the portfolio.
-      currency: Currency associated with the portfolio (e.g. USD)
-    """
-    pfl = PortfolioEntry(
-      portfolio_data=PortfolioData(currency_code=currency))
-    pfl.portfolio_title = title
-    try:
-      return self.AddPortfolio(pfl)
-    except RequestError, err:
-      LOG.error('Failed to create portfolio: %s' % err[0]['body'])
-
-  CreatePortfolio = create_portfolio
-
-  def is_token_valid(self, test_uri='/data/feed/api/user/default'):
-    """Check that the token being used is valid."""
-    return BaseCL.IsTokenValid(self, test_uri)
-
-  IsTokenValid = is_token_valid
-
-  def get_portfolio_entries(self, title=None, returns=False, positions=False,
-                            multiple=True):
-    """Get portfolio entries or one entry.
-    Args:
-      title: string, portfolio title, could be regexp.
-      returns: [optional] boolean, include returns into the result.
-      positions: [optional] boolean, include positions into the result.
-      multiple: boolean, return multiple entries if True
-    Returns: list of portfolio entries
     """
 
-    query = PortfolioQuery()
-    query.returns = returns
-    query.positions = positions
+    def __init__(self, config):
+        """Constructor."""
+        FinanceService.__init__(self)
+        BaseServiceCL.__init__(self, SECTION_HEADER, config)
+        self.max_results = None
 
-    uri = "/finance/feeds/default/portfolios/" + query.ToUri()
+    def create_portfolio(self, title, currency):
+        """Creates a portfolio.
 
-    if multiple:
-      return self.GetEntries(uri, titles=title,
-                             converter=PortfolioFeedFromString)
-    else:
-      entry = self.GetSingleEntry(uri, title=title,
-                                  converter=PortfolioFeedFromString)
-      if entry:
-        return [entry]
-      else:
-        return []
+        Args:
+          title: Title to give the portfolio.
+          currency: Currency associated with the portfolio (e.g. USD)
+        """
+        pfl = PortfolioEntry(
+            portfolio_data=PortfolioData(currency_code=currency))
+        pfl.portfolio_title = title
+        try:
+            return self.AddPortfolio(pfl)
+        except RequestError, err:
+            LOG.error('Failed to create portfolio: %s' % err[0]['body'])
 
-  def get_portfolio(self, title, returns=False, positions=False):
-    """Get portfolio by title.
-    Args:
-      title: string, portfolio title.
-      returns: [optional] boolean, include returns into the result.
-      positions: [optional] boolean, include positions into the result.
+    CreatePortfolio = create_portfolio
 
-    Returns: portfolio feed object or None if not found.
-    """
+    def is_token_valid(self, test_uri='/data/feed/api/user/default'):
+        """Check that the token being used is valid."""
+        return BaseCL.IsTokenValid(self, test_uri)
 
-    entries = self.get_portfolio_entries(title=title, returns=returns,
-                                         positions=positions, multiple=False)
-    if entries:
-      return entries[0]
-    else:
-      LOG.info('Portfolio "%s" not found' % title)
-      return None
+    IsTokenValid = is_token_valid
 
-  def get_positions(self, portfolio_title, ticker_id=None,
-                    include_returns=False):
-    """Get positions in a portfolio.
+    def get_portfolio_entries(self, title=None, returns=False, positions=False,
+                              multiple=True):
+        """Get portfolio entries or one entry.
+        Args:
+          title: string, portfolio title, could be regexp.
+          returns: [optional] boolean, include returns into the result.
+          positions: [optional] boolean, include positions into the result.
+          multiple: boolean, return multiple entries if True
+        Returns: list of portfolio entries
+        """
 
-    Args:
-      portfolio_title: Title of the portfolio.
-      ticker_id: Ticker, e.g. "NYSE:GLD"
-      include_returns: Include returns in the portfolio data. Default False.
+        query = PortfolioQuery()
+        query.returns = returns
+        query.positions = positions
 
-    Returns:
-      List of positions in the portfolio, or empty list if no positions found
-      matching the criteria.
-    """
-    # XXX:Would be nice to differentiate between positions.  Right now, just get
-    # all of them.
-    pfl = self.get_portfolio(portfolio_title, returns=include_returns,
-                               positions=True)
-    if not pfl:
-      LOG.debug('No portfolio to get positions from!')
-      return []
-    if not pfl.positions:
-      LOG.debug('No positions found in this portfolio.')
-      return []
+        uri = "/finance/feeds/default/portfolios/" + query.ToUri()
 
-    if ticker_id is not None:
-      positions = [self.GetPosition(portfolio_id=pfl.portfolio_id,
-                                      ticker_id=ticker_id)]
-    else:
-      positions = self.GetPositionFeed(portfolio_entry=pfl).entry
-    return positions
+        if multiple:
+            return self.GetEntries(uri, titles=title,
+                                   converter=PortfolioFeedFromString)
+        else:
+            entry = self.GetSingleEntry(uri, title=title,
+                                        converter=PortfolioFeedFromString)
+            if entry:
+                return [entry]
+            else:
+                return []
 
-  def get_transactions(self, portfolio_title, ticker_id, transaction_id=None):
-    pfl = self.get_portfolio(portfolio_title)
-    if not pfl:
-      LOG.debug('No portfolio to get transactions from!')
-      return []
-    if transaction_id:
-      transactions = [self.GetTransaction(portfolio_id=pfl.portfolio_id,
-                                            ticker_id=ticker_id,
-                                            transaction_id=transaction_id)]
-    else:
-      transactions = self.GetTransactionFeed(portfolio_id=pfl.portfolio_id,
-                                             ticker_id=ticker_id).entry
-    return transactions
+    def get_portfolio(self, title, returns=False, positions=False):
+        """Get portfolio by title.
+        Args:
+          title: string, portfolio title.
+          returns: [optional] boolean, include returns into the result.
+          positions: [optional] boolean, include positions into the result.
 
-  def create_transaction(self, pfl, ttype, ticker, shares=None, price=None,
-                         currency=None, commission=None, date='', notes=None):
-    """Create transaction.
+        Returns: portfolio feed object or None if not found.
+        """
 
-    Args:
-      pfl: portfolio object.
-      ttype: string, transaction type, on of the 'Buy', 'Sell',
-             'Short Sell', 'Buy to Cover'.
-      shares: [optional] decimal, amount of shares.
-      price: [optional] decimal, price of the share.
-      currency: [optional] string, portfolio currency by default.
-      commission: [optional] decimal, brocker commission.
-      date: [optional] string, transaction date,
-            datetime.now() by default.
-      notes: [optional] string, notes.
+        entries = self.get_portfolio_entries(title=title, returns=returns,
+                                             positions=positions, multiple=False)
+        if entries:
+            return entries[0]
+        else:
+            LOG.info('Portfolio "%s" not found' % title)
+            return None
 
-    Returns:
-      None if transaction created successfully, otherwise error string.
-    """
-    if not currency:
-      currency = pfl.portfolio_data.currency_code
-    if date is None:
-      # if date is not provided from the command line current date is set
-      date = datetime.datetime.now().isoformat()
-    elif date is '':
-      # special case for create position task. date should be set to None
-      # to create empty transaction. See detailed explanations in
-      # the _run_create_position function below
-      date = None
-    else:
-      parser = googlecl.calendar.date.DateParser()
-      date = parser.parse(date).local.isoformat()
+    def get_positions(self, portfolio_title, ticker_id=None,
+                      include_returns=False):
+        """Get positions in a portfolio.
 
-    if price is not None:
-      price = Price(money=[Money(amount=price, currency_code=currency)])
-    if commission is not None:
-      commission = Commission(money=[Money(amount=commission,
-                                             currency_code=currency)])
-    txn = TransactionEntry(transaction_data=TransactionData(
-        type=ttype, price=price, shares=shares, commission=commission,
-        date=date, notes=notes))
+        Args:
+          portfolio_title: Title of the portfolio.
+          ticker_id: Ticker, e.g. "NYSE:GLD"
+          include_returns: Include returns in the portfolio data. Default False.
 
-    try:
-      return self.AddTransaction(txn, portfolio_id=pfl.portfolio_id,
-                                 ticker_id=ticker)
-    except RequestError, err:
-      LOG.error('Failed to create transaction: %s' % err[0]['body'])
+        Returns:
+          List of positions in the portfolio, or empty list if no positions found
+          matching the criteria.
+        """
+        # XXX:Would be nice to differentiate between positions.  Right now, just get
+        # all of them.
+        pfl = self.get_portfolio(portfolio_title, returns=include_returns,
+                                 positions=True)
+        if not pfl:
+            LOG.debug('No portfolio to get positions from!')
+            return []
+        if not pfl.positions:
+            LOG.debug('No positions found in this portfolio.')
+            return []
+
+        if ticker_id is not None:
+            positions = [self.GetPosition(portfolio_id=pfl.portfolio_id,
+                                          ticker_id=ticker_id)]
+        else:
+            positions = self.GetPositionFeed(portfolio_entry=pfl).entry
+        return positions
+
+    def get_transactions(self, portfolio_title, ticker_id, transaction_id=None):
+        pfl = self.get_portfolio(portfolio_title)
+        if not pfl:
+            LOG.debug('No portfolio to get transactions from!')
+            return []
+        if transaction_id:
+            transactions = [self.GetTransaction(portfolio_id=pfl.portfolio_id,
+                                                ticker_id=ticker_id,
+                                                transaction_id=transaction_id)]
+        else:
+            transactions = self.GetTransactionFeed(portfolio_id=pfl.portfolio_id,
+                                                   ticker_id=ticker_id).entry
+        return transactions
+
+    def create_transaction(self, pfl, ttype, ticker, shares=None, price=None,
+                           currency=None, commission=None, date='', notes=None):
+        """Create transaction.
+
+        Args:
+          pfl: portfolio object.
+          ttype: string, transaction type, on of the 'Buy', 'Sell',
+                 'Short Sell', 'Buy to Cover'.
+          shares: [optional] decimal, amount of shares.
+          price: [optional] decimal, price of the share.
+          currency: [optional] string, portfolio currency by default.
+          commission: [optional] decimal, brocker commission.
+          date: [optional] string, transaction date,
+                datetime.now() by default.
+          notes: [optional] string, notes.
+
+        Returns:
+          None if transaction created successfully, otherwise error string.
+        """
+        if not currency:
+            currency = pfl.portfolio_data.currency_code
+        if date is None:
+            # if date is not provided from the command line current date is set
+            date = datetime.datetime.now().isoformat()
+        elif date is '':
+            # special case for create position task. date should be set to None
+            # to create empty transaction. See detailed explanations in
+            # the _run_create_position function below
+            date = None
+        else:
+            parser = googlecl.calendar.date.DateParser()
+            date = parser.parse(date).local.isoformat()
+
+        if price is not None:
+            price = Price(money=[Money(amount=price, currency_code=currency)])
+        if commission is not None:
+            commission = Commission(money=[Money(amount=commission,
+                                                 currency_code=currency)])
+        txn = TransactionEntry(transaction_data=TransactionData(
+            type=ttype, price=price, shares=shares, commission=commission,
+            date=date, notes=notes))
+
+        try:
+            return self.AddTransaction(txn, portfolio_id=pfl.portfolio_id,
+                                       ticker_id=ticker)
+        except RequestError, err:
+            LOG.error('Failed to create transaction: %s' % err[0]['body'])
 
 
 SERVICE_CLASS = FinanceServiceCL

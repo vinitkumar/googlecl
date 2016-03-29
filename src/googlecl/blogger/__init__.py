@@ -20,43 +20,44 @@ SECTION_HEADER = service_name.upper()
 
 
 def _map_access_string(access_string):
-  """Map an access string to a value Blogger will understand.
+    """Map an access string to a value Blogger will understand.
 
-  In this case, Blogger only cares about "is draft" so 'public' gets mapped to
-  False, everything else to True.
+    In this case, Blogger only cares about "is draft" so 'public' gets mapped to
+    False, everything else to True.
 
-  Returns:
-    Boolean indicating True (is a draft) or False (is not a draft).
-  """
-  if not access_string:
-    return False
-  if access_string == 'public':
-    return False
-  return True
+    Returns:
+      Boolean indicating True (is a draft) or False (is not a draft).
+    """
+    if not access_string:
+        return False
+    if access_string == 'public':
+        return False
+    return True
 
 
 class BloggerEntryToStringWrapper(googlecl.base.BaseEntryToStringWrapper):
-  @property
-  def access(self):
-    """Access level (draft or public)."""
-    if self.entry.control and self.entry.control.draft.text == 'yes':
-      return 'draft'
-    else:
-      return 'public'
 
-  @property
-  def author(self):
-    """Author."""
-    # Name of author 'x' name is in entry.author[x].name.text
-    text_extractor = lambda entry: getattr(getattr(entry, 'name'), 'text')
-    return self._join(self.entry.author, text_extractor=text_extractor)
+    @property
+    def access(self):
+        """Access level (draft or public)."""
+        if self.entry.control and self.entry.control.draft.text == 'yes':
+            return 'draft'
+        else:
+            return 'public'
 
-  @property
-  def tags(self):
-    return self.intra_property_delimiter.join(
-                            [c.term for c in self.entry.category if c.term])
-  labels = tags
-#===============================================================================
+    @property
+    def author(self):
+        """Author."""
+        # Name of author 'x' name is in entry.author[x].name.text
+        text_extractor = lambda entry: getattr(getattr(entry, 'name'), 'text')
+        return self._join(self.entry.author, text_extractor=text_extractor)
+
+    @property
+    def tags(self):
+        return self.intra_property_delimiter.join(
+            [c.term for c in self.entry.category if c.term])
+    labels = tags
+#=========================================================================
 # Each of the following _run_* functions execute a particular task.
 #
 # Keyword arguments:
@@ -64,39 +65,41 @@ class BloggerEntryToStringWrapper(googlecl.base.BaseEntryToStringWrapper):
 #  options: Contains all attributes required to perform the task
 #  args: Additional arguments passed in on the command line, may or may not be
 #        required
-#===============================================================================
+#=========================================================================
+
+
 def _run_post(client, options, args):
-  content_list = options.src + args
-  entry_list = client.UploadPosts(content_list,
-                                  blog_title=options.blog,
-                                  post_title=options.title,
-                                  is_draft=_map_access_string(options.access))
-  if options.tags:
-    client.LabelPosts(entry_list, options.tags)
+    content_list = options.src + args
+    entry_list = client.UploadPosts(content_list,
+                                    blog_title=options.blog,
+                                    post_title=options.title,
+                                    is_draft=_map_access_string(options.access))
+    if options.tags:
+        client.LabelPosts(entry_list, options.tags)
 
 
 def _run_delete(client, options, args):
-  titles_list = googlecl.build_titles_list(options.title, args)
-  post_entries = client.GetPosts(blog_title=options.blog,
-                                 post_titles=titles_list)
-  client.DeleteEntryList(post_entries, 'post', options.prompt)
+    titles_list = googlecl.build_titles_list(options.title, args)
+    post_entries = client.GetPosts(blog_title=options.blog,
+                                   post_titles=titles_list)
+    client.DeleteEntryList(post_entries, 'post', options.prompt)
 
 
 def _run_list(client, options, args):
-  titles_list = googlecl.build_titles_list(options.title, args)
-  entries = client.GetPosts(options.blog, titles_list,
-                            user_id=options.owner or 'default')
-  for entry in entries:
-    print googlecl.base.compile_entry_string(
-                                             BloggerEntryToStringWrapper(entry),
-                                             options.fields.split(','),
-                                             delimiter=options.delimiter)
+    titles_list = googlecl.build_titles_list(options.title, args)
+    entries = client.GetPosts(options.blog, titles_list,
+                              user_id=options.owner or 'default')
+    for entry in entries:
+        print googlecl.base.compile_entry_string(
+            BloggerEntryToStringWrapper(entry),
+            options.fields.split(','),
+            delimiter=options.delimiter)
 
 
 def _run_tag(client, options, args):
-  titles_list = googlecl.build_titles_list(options.title, args)
-  entries = client.GetPosts(options.blog, titles_list)
-  client.LabelPosts(entries, options.tags)
+    titles_list = googlecl.build_titles_list(options.title, args)
+    entries = client.GetPosts(options.blog, titles_list)
+    client.LabelPosts(entries, options.tags)
 
 
 TASKS = {'delete': googlecl.base.Task('Delete a post.', callback=_run_delete,
