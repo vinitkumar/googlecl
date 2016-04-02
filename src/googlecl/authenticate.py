@@ -12,7 +12,7 @@ class Authenticate(object):
     def __init__(self):
         self.config_filename = '.googlecl.conf'
 
-    def oauthLogin(self):
+    def oauth_login(self):
         from oauth2client.file import Storage
         filename = os.path.join(os.path.expanduser('~'), self.config_filename)
         storage = Storage(filename)
@@ -27,21 +27,21 @@ class Authenticate(object):
             auth_code = raw_input('Enter the auth code: ')
             credentials = flow.step2_exchange(auth_code)
             storage.put(credentials)
-        return self.refreshCreds(credentials, 0)
+        return self.refresh_creds(credentials, 0)
 
-    def refreshCreds(self, credentials, sleep):
-        global gd_client    
+    def refresh_creds(self, credentials, sleep):
+        global gd_client
         time.sleep(sleep)
-        credentials.refresh(httplib2.Http())    
+        credentials.refresh(httplib2.Http())
 
-        now = datetime.utcnow() 
+        now = datetime.utcnow()
         expires = credentials.token_expiry
-        expires_seconds = (expires-now).seconds     
+        expires_seconds = (expires-now).seconds
         # print ("Expires %s from %s = %s" % (expires,now,expires_seconds) )
 
         gd_client = gdata.photos.service.PhotosService(email='default', additional_headers={'Authorization': 'Bearer %s' % credentials.access_token})
 
-        d = threading.Thread(name='refreshCreds', target=self.refreshCreds, args=(credentials,expires_seconds - 10) )
+        d = threading.Thread(name='refresh_creds', target=self.refresh_creds, args=(credentials,expires_seconds - 10) )
         d.setDaemon(True)
         d.start()
         return gd_client
@@ -49,7 +49,7 @@ class Authenticate(object):
 
 def main():
     auth = Authenticate()
-    gd_client = auth.oauthLogin()
+    gd_client = auth.oauth_login()
     webAlbums = gd_client.GetUserFeed(user='vinitcool76')
     for webalbum in webAlbums.entry:
         print webalbum.title.text
