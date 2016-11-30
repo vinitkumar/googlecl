@@ -1,0 +1,6 @@
+**** Goals for Google CL Auth implementation ****
+
+- Get the Auth working for different users.
+- Use the auth to talk to  atleast one api.
+- Refactor code to make code generic.
+- Integrate for each of the other feature.
