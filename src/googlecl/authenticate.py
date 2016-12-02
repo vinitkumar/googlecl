@@ -50,6 +50,7 @@ class Authenticate(object):
 def main():
     auth = Authenticate()
     gd_client = auth.oauth_login()
+    import ipdb; ipdb.set_trace()
     webAlbums = gd_client.GetUserFeed(user='vinitcool76')
     for webalbum in webAlbums.entry:
         print webalbum.title.text

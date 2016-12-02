@@ -575,6 +575,7 @@ def run_interactive(parser):
                     continue
 
                 (options, args) = parse_command_line(parser, args_list)
+                import ipdb; ipdb.set_trace()
                 run_once(options, args)
 
         except (KeyboardInterrupt, ValueError), err:
