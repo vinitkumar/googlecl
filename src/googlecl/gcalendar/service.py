@@ -30,11 +30,11 @@ import googlecl.service
 import logging
 import urllib
 from googlecl import safe_encode, safe_decode
-from googlecl.calendar import SECTION_HEADER
-from googlecl.calendar.date import DateRangeParser
+from googlecl.gcalendar import SECTION_HEADER
+from googlecl.gcalendar.date import DateRangeParser
 
 
-LOG = logging.getLogger(googlecl.calendar.LOGGER_NAME)
+LOG = logging.getLogger(googlecl.gcalendar.LOGGER_NAME)
 USER_BATCH_URL_FORMAT = \
     gdata.calendar.service.DEFAULT_BATCH_URL.replace('default', '%s')
 
@@ -174,7 +174,7 @@ class CalendarServiceCL(gdata.calendar.service.CalendarService,
         # Condense events so that the user isn't prompted for the same event
         # multiple times. This is assuming that recurring events have been
         # expanded.
-        events = googlecl.calendar.condense_recurring_events(events)
+        events = googlecl.gcalendar.condense_recurring_events(events)
         for event in events:
             if prompt:
                 delete_selection = -1
@@ -241,7 +241,7 @@ class CalendarServiceCL(gdata.calendar.service.CalendarService,
 
         import atom
         request_feed = gdata.calendar.CalendarEventFeed()
-#    start_text, _, end_text = googlecl.calendar.date.split_string(date, [','])
+#    start_text, _, end_text = googlecl.gcalendar.date.split_string(date, [','])
         parser = DateRangeParser()
         date_range = parser.parse(date)
         start_time, end_time = date_range.to_when()
@@ -348,26 +348,26 @@ class CalendarServiceCL(gdata.calendar.service.CalendarService,
                                  converter=gdata.calendar.CalendarEventFeedFromString)
 
         if split:
-            single_events = googlecl.calendar.filter_recurring_events(events,
+            single_events = googlecl.gcalendar.filter_recurring_events(events,
                                                                       expand_recurrence)
-            recurring_events = googlecl.calendar.filter_single_events(events,
+            recurring_events = googlecl.gcalendar.filter_single_events(events,
                                                                       expand_recurrence)
             if start_date or end_date:
                 # Because of how the "when" info on all-day events is stored, we need to
                 # do a filter step to remove all-day events on the edge of the date
                 # range.
                 single_events = \
-                    googlecl.calendar.filter_all_day_events_outside_range(start_date,
+                    googlecl.gcalendar.filter_all_day_events_outside_range(start_date,
                                                                           end_date,
                                                                           single_events)
                 recurring_events = \
-                    googlecl.calendar.filter_all_day_events_outside_range(start_date,
+                    googlecl.gcalendar.filter_all_day_events_outside_range(start_date,
                                                                           end_date,
                                                                           recurring_events)
             return single_events, recurring_events
         else:
             if start_date or end_date:
-                return googlecl.calendar.filter_all_day_events_outside_range(start_date,
+                return googlecl.gcalendar.filter_all_day_events_outside_range(start_date,
                                                                              end_date,
                                                                              events)
             else:

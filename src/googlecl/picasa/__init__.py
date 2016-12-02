@@ -175,8 +175,8 @@ class AlbumEntryToStringWrapper(googlecl.base.BaseEntryToStringWrapper):
     def published(self):
         """When the album was published/uploaded in local time."""
         date = datetime.datetime.strptime(self.entry.published.text,
-                                          googlecl.calendar.date.QUERY_DATE_FORMAT)
-        date = date - googlecl.calendar.date.get_utc_timedelta()
+                                          googlecl.gcalendar.date.QUERY_DATE_FORMAT)
+        date = date - googlecl.gcalendar.date.get_utc_timedelta()
         return date.strftime('%Y-%m-%dT%H:%M:%S')
     when = published
 

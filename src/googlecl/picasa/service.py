@@ -31,7 +31,7 @@ import googlecl
 import googlecl.base
 import googlecl.service
 import googlecl.picasa
-import googlecl.calendar.date
+import googlecl.gcalendar.date
 
 # Shortening the names of these guys.
 safe_encode = googlecl.safe_encode
@@ -136,7 +136,7 @@ class PhotosServiceCL(PhotosService, googlecl.service.BaseServiceCL):
           AlbumEntry of newly created album.
         """
         if date:
-            parser = googlecl.calendar.date.DateParser()
+            parser = googlecl.gcalendar.date.DateParser()
             date = parser.determine_day(date, shift_dates=False)
             if date:
                 timestamp = time.mktime(date.timetuple())
