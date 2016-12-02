@@ -53,6 +53,7 @@ import traceback
 import webbrowser
 import googlecl
 import googlecl.authentication
+import googlecl.authenticate
 import googlecl.config
 try:  # Fails if Discovery stuff is unavailable
     from googlecl.discovery import DiscoveryManager
@@ -575,7 +576,6 @@ def run_interactive(parser):
                     continue
 
                 (options, args) = parse_command_line(parser, args_list)
-                import ipdb; ipdb.set_trace()
                 run_once(options, args)
 
         except (KeyboardInterrupt, ValueError), err:
@@ -772,19 +772,23 @@ def run_once(options, args):
                         'Option ' + attr_name + ': ' + unicode(attr)))
     LOG.debug(safe_encode('args: ' + unicode(args)))
 
-    auth_manager = googlecl.authentication.AuthenticationManager(
-        service, client)
-    authenticated = authenticate(auth_manager, options, config, section_header)
+    auth = googlecl.authenticate.Authenticate()
+    client = auth.oauth_login()
+    #auth_manager = googlecl.authentication.AuthenticationManager(
+    #    service, client)
+    #authenticated = authenticate(auth_manager, options, config, section_header)
 
-    if not authenticated:
-        LOG.debug('Authentication failed, exiting run_once')
-        return -1
+    #if not authenticated:
+    #    LOG.debug('Authentication failed, exiting run_once')
+    #    return -1
 
     # If we've authenticated, save the config values we've been setting.
     # And remember the email address that worked!
+
     config.set_missing_default(section_header, 'user', client.email)
     config.write_out_parser()
     run_error = None
+
     try:
         task.run(client, options, args)
     except AttributeError, run_error:

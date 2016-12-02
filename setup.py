@@ -67,7 +67,7 @@ command-line tool that makes it easy to do things like posting to a Blogger
 blog, uploading files to Picasa, or editing a Google Docs file."""
 
 setup(name="google_cl",
-      version="0.9.15",
+      version="0.9.15.1",
       description="Use (some) Google services from the command line",
       author=['Tom H. Miller', 'Vinit Kumar'],
       author_email=['tom.h.miller@gmail.com', 'vinit.kumar@changer.nl'],
