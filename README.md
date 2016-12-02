@@ -1,11 +1,11 @@
 #Google CL
 
-[![Downloads](https://pypip.in/d/google_cl/badge.png)](https://crate.io/package/google_cl)
+[![Build Status](https://travis-ci.org/vinitkumar/googlecl.svg?branch=master)](https://travis-ci.org/vinitkumar/googlecl)
 
 GoogleCL is a command line utility to use google services like youtube, blogger etc.
 
-It was developed by Mr.Tom H. Miller from Google and was hosted 
-[here](https://code.google.com/p/googlecl/). 
+It was developed by Mr.Tom H. Miller from Google and was hosted
+[here](https://code.google.com/p/googlecl/).
 
 This is a fork of the above project to keep the development up and running. Hope you enjoy it and if you do, you can tip me here at https://gratipay.com/vinitkme/. Thanks! :)
 
