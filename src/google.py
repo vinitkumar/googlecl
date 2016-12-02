@@ -790,6 +790,11 @@ def run_once(options, args):
     run_error = None
 
     try:
+        #webalbums = client.GetUserFeed(user='vinitcool76')
+        #for webalbum in webalbums.entry:
+        #    print webalbum.title.text
+        # the crash is because the client implements different tasks than what is expected here.
+        #
         task.run(client, options, args)
     except AttributeError, run_error:
         err_str = safe_decode(run_error)
