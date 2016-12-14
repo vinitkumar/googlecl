@@ -194,9 +194,8 @@ def _run_create(client, options, args):
     # Paths to media might be in options.src, args, both, or neither.
     # But both are guaranteed to be lists.
     media_list = options.src + args
-
-    album = client.create_album(title=options.title, summary=options.summary,
-                                access=options.access, date=options.date)
+    album = client.InsertAlbum(title=options.title, summary=options.summary,
+                                access=options.access, timestamp=options.date)
     if media_list:
         client.InsertMediaList(album, media_list=media_list,
                                tags=options.tags)

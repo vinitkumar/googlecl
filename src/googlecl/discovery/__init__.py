@@ -56,7 +56,6 @@ class DiscoveryManager():
             self.dataManager.local_apis, self.dataManager.base_url)
 
     def run(self, argv):
-        import ipdb; ipdb.set_trace()
 
         try:
             """Primary function for the program
