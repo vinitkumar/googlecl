@@ -4,3 +4,4 @@ google_cl.egg-info/
 .idea
 *.pyc
 src/google
+client_secrent.json
