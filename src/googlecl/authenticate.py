@@ -1,7 +1,9 @@
 import os
 import httplib2
 import threading
-from gdata.photos.service import *
+import time
+from gdata.photos.service import PhotosService
+from gdata.docs.service import DocsService
 import gdata.media
 from datetime import timedelta, datetime
 import gdata.geo
@@ -9,8 +11,9 @@ from oauth2client import client
 
 
 class Authenticate(object):
-    def __init__(self):
+    def __init__(self, service):
         self.config_filename = '.googlecl.conf'
+        self.service = service
 
     def oauth_login(self):
         from oauth2client.file import Storage
@@ -19,7 +22,7 @@ class Authenticate(object):
         credentials = storage.get()
         if credentials is None or credentials.invalid:
             flow = client.flow_from_clientsecrets('client_secret.json',
-                                                  scope='https://picasaweb.google.com/data/',
+                                                  scope='https://picasaweb.google.com/data/ https://www.googleapis.com/auth/drive https://docs.google.com/feeds/' ,
                                                   redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
             auth_uri = flow.step1_get_authorize_url()
@@ -38,22 +41,12 @@ class Authenticate(object):
         expires = credentials.token_expiry
         expires_seconds = (expires-now).seconds
         # print ("Expires %s from %s = %s" % (expires,now,expires_seconds) )
-
-        gd_client = gdata.photos.service.PhotosService(email='default', additional_headers={'Authorization': 'Bearer %s' % credentials.access_token})
+        if self.service == 'docs':
+            gd_client = DocsService(email='default', additional_headers={'Authorization': 'Bearer %s' % credentials.access_token})
+        elif self.service == 'picasa':
+            gd_client = PhotosService(email='default', additional_headers={'Authorization': 'Bearer %s' % credentials.access_token})
 
         d = threading.Thread(name='refresh_creds', target=self.refresh_creds, args=(credentials,expires_seconds - 10) )
         d.setDaemon(True)
         d.start()
         return gd_client
-
-
-def main():
-    auth = Authenticate()
-    gd_client = auth.oauth_login()
-    webAlbums = gd_client.GetUserFeed(user='vinitcool76')
-    for webalbum in webAlbums.entry:
-        print webalbum.title.text
-
-
-if __name__ == '__main__':
-    main()

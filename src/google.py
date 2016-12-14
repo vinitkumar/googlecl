@@ -771,8 +771,7 @@ def run_once(options, args):
                     LOG.debug(safe_encode(
                         'Option ' + attr_name + ': ' + unicode(attr)))
     LOG.debug(safe_encode('args: ' + unicode(args)))
-
-    auth = googlecl.authenticate.Authenticate()
+    auth = googlecl.authenticate.Authenticate(service)
     client = auth.oauth_login()
     #auth_manager = googlecl.authentication.AuthenticationManager(
     #    service, client)

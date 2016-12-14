@@ -141,6 +141,7 @@ def _run_get(client, options, args):
 
 def _run_list(client, options, args):
     titles_list = googlecl.build_titles_list(options.title, args)
+    # client.get_folder is deprecated. And so is DocService.GetFeedList()
     folder_entries = client.get_folder(options.folder)
     entries = client.get_doclist(titles_list, folder_entries)
     for entry in entries:

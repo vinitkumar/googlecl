@@ -182,6 +182,7 @@ class DocsBaseCL(object):
                     when downloading arbitrary files.
 
         """
+        import ipdb; ipdb.set_trace()
         if not os.path.isdir(base_path):
             if len(entries) > 1:
                 raise DocsError(safe_encode(u'Specified multiple source files, but ' +
