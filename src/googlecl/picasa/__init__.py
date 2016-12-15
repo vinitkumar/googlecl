@@ -221,12 +221,8 @@ def _run_delete(client, options, args):
 
 
 def _run_list(client, options, args):
-    titles_list = googlecl.build_titles_list(options.title, args)
-    entries = client.build_entry_list(user=options.owner or options.user,
-                                      titles=titles_list,
-                                      query=options.query,
-                                      force_photos=True,
-                                      photo_title=options.photo)
+    userfeed = client.GetUserFeed()
+    entries = userfeed.entry
     for entry in entries:
         print googlecl.base.compile_entry_string(PhotoEntryToStringWrapper(entry),
                                                  options.fields.split(','),
