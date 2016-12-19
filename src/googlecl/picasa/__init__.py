@@ -244,12 +244,10 @@ def _run_post(client, options, args):
     media_list = options.src + args
     if not media_list:
         LOG.error('Must provide paths to media to post!')
-    album = client.GetSingleAlbum(user=options.owner or options.user,
-                                  title=options.title)
+    album = client.GetUserFeed().entry[0]
     if album:
-        client.InsertMediaList(album, media_list, tags=options.tags,
-                               user=options.owner or options.user,
-                               photo_name=options.photo, caption=options.summary)
+        client.InsertPhotoSimple(album, 'New Photo', 'uploaded using API',
+                media_list[0], content_type='image/jpeg')
     else:
         LOG.error('No albums found that match ' + options.title)
 
@@ -260,11 +258,17 @@ def _run_get(client, options, args):
         return
 
     titles_list = googlecl.build_titles_list(options.title, args)
-    client.DownloadAlbum(options.dest,
-                         user=options.owner or options.user,
-                         video_format=options.format or 'mp4',
-                         titles=titles_list,
-                         photo_title=options.photo)
+    try:
+        client.DownloadAlbum(options.dest,
+                            user=options.owner or options.user,
+                            video_format=options.format or 'mp4',
+                            titles=titles_list,
+                            photo_title=options.photo)
+    except Exception as e:
+        LOG.error("*" * 80)
+        LOG.error("WARNING:DeprecatedAPI")
+        LOG.error(e)
+        LOG.error("*" * 80)
 
 
 def _run_tag(client, options, args):
