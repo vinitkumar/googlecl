@@ -18,7 +18,7 @@ import googlecl.base
 import logging
 import re
 import time
-from googlecl.calendar.date import DateRangeParser
+from googlecl.gcalendar.date import DateRangeParser
 
 service_name = __name__.split('.')[-1]
 LOGGER_NAME = __name__

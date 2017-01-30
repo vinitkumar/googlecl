@@ -53,6 +53,7 @@ import traceback
 import webbrowser
 import googlecl
 import googlecl.authentication
+import googlecl.authenticate
 import googlecl.config
 try:  # Fails if Discovery stuff is unavailable
     from googlecl.discovery import DiscoveryManager
@@ -119,75 +120,6 @@ def parse_command_line(parser, original_args):
 class Error():
     """Base error for this module."""
     pass
-
-
-def authenticate(auth_manager, options, config, section_header):
-    """Set a (presumably valid) OAuth token for the client to use.
-
-    Args:
-      auth_manager: Object handling the authentication process.
-      options: Parsed command line options.
-      config: Configuration file parser.
-      section_header: Section header to look in for the configuration file.
-
-    Returns:
-      True if authenticated, False otherwise.
-    """
-    # Only try to set the access token if we're not forced to authenticate.
-    # XXX: logic in here is iffy. Don't bother checking access token if it's not
-    # set
-    if not options.force_auth:
-        set_token = auth_manager.set_access_token()
-        if set_token:
-            LOG.debug('Successfully set token')
-            skip_auth = (options.skip_auth or
-                         config.lazy_get(section_header, 'skip_auth',
-                                         default=False, option_type=bool))
-        else:
-            LOG.debug('Failed to set token!')
-            skip_auth = False
-    else:
-        LOG.debug('Forcing retrieval of new token')
-        skip_auth = False
-
-    if options.force_auth or not skip_auth:
-        LOG.debug('Checking access token...')
-        valid_token = auth_manager.check_access_token()
-        if not valid_token:
-            display_name = auth_manager.get_display_name(options.hostid)
-            browser_str = config.lazy_get(section_header, 'auth_browser',
-                                          default=None)
-            if browser_str:
-                if browser_str.lower() == 'disabled' or browser_str.lower() == 'none':
-                    browser = None
-                else:
-                    try:
-                        browser = webbrowser.get(browser_str)
-                    except webbrowser.Error, err:
-                        LOG.warn(safe_encode(u'Could not get browser "%s": %s' %
-                                             (browser_str, err)))
-                        browser = None
-            else:
-                try:
-                    browser = webbrowser.get()
-                except webbrowser.Error, err:
-                    LOG.warn(safe_encode(
-                        u'Could not get default browser: %s' % err))
-                    browser = None
-
-            valid_token = auth_manager.retrieve_access_token(
-                display_name, browser)
-        if valid_token:
-            LOG.debug('Retrieved valid access token')
-            config.set_missing_default(section_header, 'skip_auth', True)
-            return True
-        else:
-            LOG.debug('Could not retrieve valid access token')
-            return False
-    else:
-        # Already set an access token and we're not being forced to
-        # authenticate
-        return True
 
 
 # I don't know if this and shlex.split() can replace expand_as_command_line
@@ -770,21 +702,30 @@ def run_once(options, args):
                     LOG.debug(safe_encode(
                         'Option ' + attr_name + ': ' + unicode(attr)))
     LOG.debug(safe_encode('args: ' + unicode(args)))
+    # this uses the custom authentication module for oauth2
+    auth = googlecl.authenticate.Authenticate(service)
+    client = auth.oauth_login()
+    #auth_manager = googlecl.authentication.AuthenticationManager(
+    #    service, client)
+    #authenticated = authenticate(auth_manager, options, config, section_header)
 
-    auth_manager = googlecl.authentication.AuthenticationManager(
-        service, client)
-    authenticated = authenticate(auth_manager, options, config, section_header)
-
-    if not authenticated:
-        LOG.debug('Authentication failed, exiting run_once')
-        return -1
+    #if not authenticated:
+    #    LOG.debug('Authentication failed, exiting run_once')
+    #    return -1
 
     # If we've authenticated, save the config values we've been setting.
     # And remember the email address that worked!
+
     config.set_missing_default(section_header, 'user', client.email)
     config.write_out_parser()
     run_error = None
+
     try:
+        #webalbums = client.GetUserFeed(user='vinitcool76')
+        #for webalbum in webalbums.entry:
+        #    print webalbum.title.text
+        # the crash is because the client implements different tasks than what is expected here.
+        #
         task.run(client, options, args)
     except AttributeError, run_error:
         err_str = safe_decode(run_error)

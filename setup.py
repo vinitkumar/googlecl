@@ -22,7 +22,7 @@ import os
 import shutil
 packages =['googlecl',
            'googlecl.blogger',
-           'googlecl.calendar',
+           'googlecl.gcalendar',
            'googlecl.config',
            'googlecl.contacts',
            'googlecl.docs',
@@ -67,7 +67,7 @@ command-line tool that makes it easy to do things like posting to a Blogger
 blog, uploading files to Picasa, or editing a Google Docs file."""
 
 setup(name="google_cl",
-      version="0.9.15",
+      version="0.9.15.1",
       description="Use (some) Google services from the command line",
       author=['Tom H. Miller', 'Vinit Kumar'],
       author_email=['tom.h.miller@gmail.com', 'vinit.kumar@changer.nl'],
@@ -76,7 +76,7 @@ setup(name="google_cl",
       packages=packages,
       package_dir={'googlecl':'src/googlecl'},
       scripts=[SCRIPT_TO_INSTALL],
-      install_requires=['gdata ==2.0.18'],
+      install_requires=['gdata==2.0.18', 'httplib2==0.9.2', 'oauth2client==4.0.0'],
       long_description=long_desc,
       classifiers=[
           'Topic :: Internet :: WWW/HTTP',

@@ -175,8 +175,8 @@ class AlbumEntryToStringWrapper(googlecl.base.BaseEntryToStringWrapper):
     def published(self):
         """When the album was published/uploaded in local time."""
         date = datetime.datetime.strptime(self.entry.published.text,
-                                          googlecl.calendar.date.QUERY_DATE_FORMAT)
-        date = date - googlecl.calendar.date.get_utc_timedelta()
+                                          googlecl.gcalendar.date.QUERY_DATE_FORMAT)
+        date = date - googlecl.gcalendar.date.get_utc_timedelta()
         return date.strftime('%Y-%m-%dT%H:%M:%S')
     when = published
 
@@ -194,9 +194,8 @@ def _run_create(client, options, args):
     # Paths to media might be in options.src, args, both, or neither.
     # But both are guaranteed to be lists.
     media_list = options.src + args
-
-    album = client.create_album(title=options.title, summary=options.summary,
-                                access=options.access, date=options.date)
+    album = client.InsertAlbum(title=options.title, summary=options.summary,
+                                access=options.access, timestamp=options.date)
     if media_list:
         client.InsertMediaList(album, media_list=media_list,
                                tags=options.tags)
@@ -222,12 +221,8 @@ def _run_delete(client, options, args):
 
 
 def _run_list(client, options, args):
-    titles_list = googlecl.build_titles_list(options.title, args)
-    entries = client.build_entry_list(user=options.owner or options.user,
-                                      titles=titles_list,
-                                      query=options.query,
-                                      force_photos=True,
-                                      photo_title=options.photo)
+    userfeed = client.GetUserFeed()
+    entries = userfeed.entry
     for entry in entries:
         print googlecl.base.compile_entry_string(PhotoEntryToStringWrapper(entry),
                                                  options.fields.split(','),
@@ -249,12 +244,10 @@ def _run_post(client, options, args):
     media_list = options.src + args
     if not media_list:
         LOG.error('Must provide paths to media to post!')
-    album = client.GetSingleAlbum(user=options.owner or options.user,
-                                  title=options.title)
+    album = client.GetUserFeed().entry[0]
     if album:
-        client.InsertMediaList(album, media_list, tags=options.tags,
-                               user=options.owner or options.user,
-                               photo_name=options.photo, caption=options.summary)
+        client.InsertPhotoSimple(album, 'New Photo', 'uploaded using API',
+                media_list[0], content_type='image/jpeg')
     else:
         LOG.error('No albums found that match ' + options.title)
 
@@ -265,11 +258,17 @@ def _run_get(client, options, args):
         return
 
     titles_list = googlecl.build_titles_list(options.title, args)
-    client.DownloadAlbum(options.dest,
-                         user=options.owner or options.user,
-                         video_format=options.format or 'mp4',
-                         titles=titles_list,
-                         photo_title=options.photo)
+    try:
+        client.DownloadAlbum(options.dest,
+                            user=options.owner or options.user,
+                            video_format=options.format or 'mp4',
+                            titles=titles_list,
+                            photo_title=options.photo)
+    except Exception as e:
+        LOG.error("*" * 80)
+        LOG.error("WARNING:DeprecatedAPI")
+        LOG.error(e)
+        LOG.error("*" * 80)
 
 
 def _run_tag(client, options, args):

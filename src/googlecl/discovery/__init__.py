@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Subprogram for GoogleCL which handles all requests 
+"""Subprogram for GoogleCL which handles all requests
    using the Discovery service
 
 This program uses the Discovery API to take interact with other APIs.
@@ -56,9 +56,10 @@ class DiscoveryManager():
             self.dataManager.local_apis, self.dataManager.base_url)
 
     def run(self, argv):
+
         try:
             """Primary function for the program
-            Executes methods, displays help, and organizes formatting for services 
+            Executes methods, displays help, and organizes formatting for services
             using Discovery
 
             Args:
@@ -137,7 +138,7 @@ class DiscoveryManager():
 
 
 def getMethod(service, doc, args):
-    """ Locates the method to be executed 
+    """ Locates the method to be executed
     Capable of finding some methods implicitly
     Displays assistance if method isn't identified
 
@@ -147,7 +148,7 @@ def getMethod(service, doc, args):
       args: List containing the method path to be followed
 
     Returns:
-      A tuple of the meta-info describing the method, 
+      A tuple of the meta-info describing the method,
       the method itself, and the parameters for the method
     """
     obj = doc

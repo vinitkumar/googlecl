@@ -54,7 +54,7 @@ import logging
 import datetime
 
 import googlecl
-import googlecl.calendar.date
+import googlecl.gcalendar.date
 from googlecl.base import BaseCL
 from googlecl.service import BaseServiceCL
 from googlecl.finance import SECTION_HEADER
@@ -227,7 +227,7 @@ class FinanceServiceCL(FinanceService, BaseServiceCL):
             # the _run_create_position function below
             date = None
         else:
-            parser = googlecl.calendar.date.DateParser()
+            parser = googlecl.gcalendar.date.DateParser()
             date = parser.parse(date).local.isoformat()
 
         if price is not None:

@@ -20,7 +20,7 @@ def _create_basic_options():
     """Set the most basic options in the config file."""
     import googlecl.docs
     import googlecl.contacts
-    import googlecl.calendar
+    import googlecl.gcalendar
     import googlecl.youtube
     import getpass
     import socket
@@ -49,7 +49,7 @@ def _create_basic_options():
              'presentation_editor': 'openoffice.org'}
     return {googlecl.docs.SECTION_HEADER: _docs,
             googlecl.contacts.SECTION_HEADER: _contacts,
-            googlecl.calendar.SECTION_HEADER: _calendar,
+            googlecl.gcalendar.SECTION_HEADER: _calendar,
             googlecl.youtube.SECTION_HEADER: _youtube,
             'GENERAL': _general}
 

@@ -27,6 +27,16 @@ LOG = logging.getLogger(LOGGER_NAME)
 
 # XXX: Public-facing functions are confusing, clean up.
 
+class NewCode(object):
+    def __init__(self, a):
+        self.a = a
+
+    def getA(self):
+        return self.a
+
+    def setA(self):
+        return "How the Fuck will I do it?"
+
 
 class AuthenticationManager(object):
     """Handles OAuth token for a given service."""
