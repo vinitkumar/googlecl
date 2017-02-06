@@ -4,10 +4,13 @@
 
 GoogleCL is a command line utility to use google services like youtube, blogger etc.
 
+
+## Credits
+
 It was developed by Mr.Tom H. Miller from Google and was hosted
 [here](https://code.google.com/p/googlecl/).
 
-This is a fork of the above project to keep the development up and running. Hope you enjoy it and if you do, you can tip me here at https://gratipay.com/vinitkme/. Thanks! :)
+This is a github fork of the project.
 
 ## Installation
 
@@ -18,6 +21,33 @@ git clone https://github.com/vinitkumar/googlecl.git
 cd googlecl
 python setup.py install
 ```
+
+## Usage
+
+The authentication has been ported to Oauth2 but the due to breaking changes to
+the google data apis not everything works yet.
+
+When using for the first time, it asks to authenticate using a google account
+and saves the token and everything else requires in a ~/.googlecl.conf file.
+
+Any further api calls are authenticated automatically using this file and if
+the access token is refreshed it is also written back to this file.
+
+```sh
+$ python src/google.py picasa list --title=vinit
+
+# Results of the query below
+
+Refreshing access_token
+Auto Backup,https://picasaweb.google.com/106645023605660581419?alabel=small_instant_upload
+vinit ,https://picasaweb.google.com/106645023605660581419/6364374472652374833?authkey=Gv1sRgCKvwtLTF-LCYhwE
+new albium,https://picasaweb.google.com/106645023605660581419/6364013171723570321?authkey=Gv1sRgCMyYo4WgzbmxXA
+new albium,https://picasaweb.google.com/106645023605660581419/6363985588196326577?authkey=Gv1sRgCLiN2Yy96ZGkwAE
+new albium,https://picasaweb.google.com/106645023605660581419/6363984184714329473?authkey=Gv1sRgCIOvoYj-6IL_rQE
+```
+
+The porting is still in progress but some part works now and more will be near
+future as I get more time to complete the porting.
 
 ## Contribution:
 
