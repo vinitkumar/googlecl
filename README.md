@@ -39,11 +39,8 @@ $ python src/google.py picasa list --title=vinit
 # Results of the query below
 
 Refreshing access_token
-Auto Backup,https://picasaweb.google.com/106645023605660581419?alabel=small_instant_upload
-vinit ,https://picasaweb.google.com/106645023605660581419/6364374472652374833?authkey=Gv1sRgCKvwtLTF-LCYhwE
-new albium,https://picasaweb.google.com/106645023605660581419/6364013171723570321?authkey=Gv1sRgCMyYo4WgzbmxXA
-new albium,https://picasaweb.google.com/106645023605660581419/6363985588196326577?authkey=Gv1sRgCLiN2Yy96ZGkwAE
-new albium,https://picasaweb.google.com/106645023605660581419/6363984184714329473?authkey=Gv1sRgCIOvoYj-6IL_rQE
+Auto Backup,https://picasaweb.google.com/1da353532827267524qeqe3419?alabel=small_instant_upload
+vinit ,https://picasaweb.google.com/106645023605660581419/636437447265237483335626262
 ```
 
 The porting is still in progress but some part works now and more will be near
