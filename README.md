@@ -7,7 +7,7 @@ GoogleCL is a command line utility to use google services like youtube, blogger 
 
 ## Credits
 
-It was developed by Mr.Tom H. Miller from Google and was hosted
+It was originally written by [Tom H. Miller](https://github.com/TomMiller) from Google and was hosted
 [here](https://code.google.com/p/googlecl/).
 
 This is a github fork of the project.
