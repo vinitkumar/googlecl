@@ -52,5 +52,3 @@ Few things should be kept in notice before contributing:
 - Send a pull-request and clearly mention what bug or feature you are working on.
 
 Thanks :)
-
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/uyhQ2YHmpDTZbNRraFXJEvTa/vinitkumar/googlecl'>  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/uyhQ2YHmpDTZbNRraFXJEvTa/vinitkumar/googlecl.svg' /></a>
