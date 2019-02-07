@@ -1,2 +1,0 @@
-include src/google README.txt README.config INSTALL.txt changelog README.new-usage README.md License
-recursive-include googlecl *.py
