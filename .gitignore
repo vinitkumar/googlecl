@@ -4,4 +4,6 @@ google_cl.egg-info/
 .idea
 *.pyc
 src/google
+.eggs/
+.mypy_cache/
 client_secrent.json
