@@ -7,3 +7,4 @@ src/google
 .eggs/
 .mypy_cache/
 client_secrent.json
+.DS_Store
