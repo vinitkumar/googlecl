@@ -4,15 +4,19 @@
 import sys
 import click
 
+@click.group()
+def cli():
+    click.echo("Sunday Monday")
 
-@click.command()
-def main(args=None):
-    """Console script for google_cl."""
-    click.echo("Replace this message by putting your code into "
-               "google_cl.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
-    return 0
+@cli.group()
+def picasa():
+    click.echo("This is a list")
 
 
-if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+@cli.group()
+def contacts():
+    click.echo("contacts placeholder")
+
+@picasa.command()
+def list():
+    click.echo("This is coming from picasa list")

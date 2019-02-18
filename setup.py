@@ -36,7 +36,7 @@ setup(
     description="Pythonic interface to interact with google services",
     entry_points={
         'console_scripts': [
-            'google_cl=google_cl.cli:main',
+            'google=google_cl.cli:cli',
         ],
     },
     install_requires=requirements,
