@@ -32,6 +32,38 @@ Features
 
 * TODO
 
+Contributors
++++++++
+
+Code Contributors
+------------------
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+.. image:: https://opencollective.com/googlecl/contributors.svg?width=890&button=false 
+
+Financial Contributors
+------------------
+
+Become a financial contributor and help us sustain our community. Contribute_
+
+Individuals
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://opencollective.com/googlecl/individuals.svg?width=890
+    :target: https://opencollective.com/googlecl
+
+Organizations
+~~~~~~~~~~~~~~~~~~~~~~
+
+Support this project with your organization. Your logo will show up here with a link to your website. Contribute_
+
+.. image:: https://opencollective.com/googlecl/organization/0/avatar.svg
+    :target: https://opencollective.com/googlecl/organization/0/website
+
+.. _Contribute: https://opencollective.com/googlecl
+
+* TODO
+
 Credits
 -------
 
