@@ -17,6 +17,7 @@ def picasa():
 def contacts():
     click.echo("contacts placeholder")
 
+
 @picasa.command()
-def list():
+def photolist():
     click.echo("This is coming from picasa list")
