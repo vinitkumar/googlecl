@@ -1,3 +1,5 @@
+.. highlight:: shell
+
 =========
 google_cl
 =========
