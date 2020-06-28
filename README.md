@@ -17,40 +17,7 @@ Pythonic interface to interact with google services
 Features
 --------
 
--   TODO
+TODO:
 
-Contributors +++++++
+-   Implement core Google services
 
-Code Contributors
------------------
-
-This project exists thanks to all the people who contribute.
-\[\[Contribute\](CONTRIBUTING.md)\]. .. image::
-<https://opencollective.com/googlecl/contributors.svg?width=890&button=false>
-
-Financial Contributors \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
-
-Become a financial contributor and help us sustain our community.
-[Contribute](https://opencollective.com/googlecl)
-
-### Individuals
-
-[![image](https://opencollective.com/googlecl/individuals.svg?width=890)](https://opencollective.com/googlecl)
-
-### Organizations
-
-Support this project with your organization. Your logo will show up here
-with a link to your website.
-[Contribute](https://opencollective.com/googlecl)
-
-[![image](https://opencollective.com/googlecl/organization/0/avatar.svg)](https://opencollective.com/googlecl/organization/0/website)
-
--   TODO
-
-Credits
--------
-
-This package was created with
-[Cookiecutter](https://github.com/audreyr/cookiecutter) and the
-[audreyr/cookiecutter-pypackage](https://github.com/audreyr/cookiecutter-pypackage)
-project template.
