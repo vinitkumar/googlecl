@@ -13,7 +13,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = ['Click>=6.0', ]
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = ['google-auth==1.6.3', 'pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
