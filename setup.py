@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
@@ -13,7 +13,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = ['Click>=6.0', ]
 
-setup_requirements = ['google-auth==1.6.3', 'pytest-runner', ]
+setup_requirements = ['google-auth==1.6.3', 'pytest-runner', "requests_oauthlib", ]
 
 test_requirements = ['pytest', ]
 
@@ -36,7 +36,7 @@ setup(
     description="Pythonic interface to interact with google services",
     entry_points={
         'console_scripts': [
-            'google=google_cl.cli:cli',
+            'google=src.cli:cli',
         ],
     },
     install_requires=requirements,
@@ -45,7 +45,7 @@ setup(
     include_package_data=True,
     keywords='google_cl',
     name='google_cl',
-    packages=find_packages(include=['google_cl']),
+    packages=find_packages(include=['src']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
