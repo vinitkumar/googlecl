@@ -3,10 +3,15 @@
 """Console script for google_cl."""
 import sys
 import click
+from src.authorize import Authorize
 
 @click.group()
 def cli():
     click.echo("Sunday Monday")
+
+@cli.group()
+def login():
+    Authorize()
 
 @cli.group()
 def picasa():

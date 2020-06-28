@@ -11,9 +11,8 @@ with open('README.md') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', ]
-
-setup_requirements = ['google-auth==1.6.3', 'pytest-runner', "requests_oauthlib", ]
+setup_requirements = ['google-auth==1.6.3', 'pytest-runner', 'requests_oauthlib', 'requests' ]
+requirements = ['google-auth==1.6.3', 'pytest-runner', 'requests_oauthlib', 'requests' ]
 
 test_requirements = ['pytest', ]
 
