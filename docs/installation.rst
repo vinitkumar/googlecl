@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install google_cl, run this command in your terminal:
+To install googlecl, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install google_cl
+    $ pip install googlecl
 
-This is the preferred method to install google_cl, as it will always install the most recent stable release.
+This is the preferred method to install googlecl, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,19 +26,19 @@ you through the process.
 From sources
 ------------
 
-The sources for google_cl can be downloaded from the `Github repo`_.
+The sources for googlecl can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/vinitkumar/google_cl
+    $ git clone git://github.com/vinitkumar/googlecl
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/vinitkumar/google_cl/tarball/master
+    $ curl  -OL https://github.com/vinitkumar/googlecl/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/vinitkumar/google_cl
-.. _tarball: https://github.com/vinitkumar/google_cl/tarball/master
+.. _Github repo: https://github.com/vinitkumar/googlecl
+.. _tarball: https://github.com/vinitkumar/googlecl/tarball/master
