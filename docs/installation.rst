@@ -12,7 +12,7 @@ To install googlecl, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install google-cl
+    $ pip install google_cl
 
 This is the preferred method to install googlecl, as it will always install the most recent stable release.
 
