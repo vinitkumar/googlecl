@@ -28,7 +28,7 @@ Pythonic interface to interact with google services
 
 
 Features
---------
++++++++
 
 * TODO
 
@@ -65,7 +65,7 @@ Support this project with your organization. Your logo will show up here with a 
 * TODO
 
 Credits
--------
+++++++++
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
