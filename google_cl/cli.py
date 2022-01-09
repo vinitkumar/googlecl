@@ -2,17 +2,20 @@
 
 """Console script for google_cl."""
 import sys
-import click
+
+from typing import Optional
+from typing import Sequence
 
 
-@click.command()
-def main(args=None):
-    """Console script for google_cl."""
-    click.echo("Replace this message by putting your code into "
-               "google_cl.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
-    return 0
+from google_cl.main import application
 
 
-if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    app = application.Application()
+    app.run(argv)
+    return app.exit_code()
+
+
