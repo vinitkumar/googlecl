@@ -1,4 +1,5 @@
 build/
+GoogleCL.egg-info/
 dist/
 google_cl.egg-info/
 .idea
