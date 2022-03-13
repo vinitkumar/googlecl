@@ -15,14 +15,14 @@ class Application:
     def __init__(self) -> None:
         self.start_time = time.time()
         self.catastrophic_failure = False
-        root_folder = Path(args.root_folder).absolute()
+        root_folder = Path(root_folder).absolute()
 
         compare_folder = None
-        if args.compare_folder:
-            compare_folder = Path(args.compare_folder).absolute()
+        if compare_folder:
+            compare_folder = Path(compare_folder).absolute()
         app_dirs = AppDirs(APP_NAME)
 
-        self.data_store = LocalData(db_path, args.flush_index)
+        self.data_store = LocalData(db_path, flush_index)
 
         credentials_file = db_path / ".gphotos.token"
         if args.secret:
