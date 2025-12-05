@@ -33,7 +33,7 @@ class Email:
     labels: list[str] | None = None
 
     @classmethod
-    def from_api_response(cls, msg: dict[str, Any]) -> "Email":
+    def from_api_response(cls, msg: dict[str, Any]) -> Email:
         """Create Email from Gmail API response."""
         headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
 
@@ -74,7 +74,7 @@ class Label:
     messages_unread: int = 0
 
     @classmethod
-    def from_api_response(cls, label: dict[str, Any]) -> "Label":
+    def from_api_response(cls, label: dict[str, Any]) -> Label:
         """Create Label from Gmail API response."""
         return cls(
             id=label.get("id", ""),

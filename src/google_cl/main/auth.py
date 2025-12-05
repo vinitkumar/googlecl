@@ -233,7 +233,7 @@ class GoogleAuth:
         return True
 
 
-def build_service(service_name: str, version: str, credentials: Credentials) -> "Resource":
+def build_service(service_name: str, version: str, credentials: Credentials) -> Resource:
     """
     Build a Google API service client.
 

@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Sequence
+from collections.abc import Sequence
 
 from google_cl import exceptions
 

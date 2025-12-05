@@ -29,7 +29,7 @@ class Calendar:
     foreground_color: str
 
     @classmethod
-    def from_api_response(cls, cal: dict[str, Any]) -> "Calendar":
+    def from_api_response(cls, cal: dict[str, Any]) -> Calendar:
         """Create Calendar from API response."""
         return cls(
             id=cal.get("id", ""),
@@ -60,7 +60,7 @@ class Event:
     recurrence: list[str] | None = None
 
     @classmethod
-    def from_api_response(cls, event: dict[str, Any]) -> "Event":
+    def from_api_response(cls, event: dict[str, Any]) -> Event:
         """Create Event from API response."""
         # Handle start time (can be date or dateTime)
         start_data = event.get("start", {})

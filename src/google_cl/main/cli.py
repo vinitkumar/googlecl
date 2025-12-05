@@ -314,7 +314,7 @@ def gmail_labels() -> None:
 @drive_app.command("list")
 def drive_list(
     count: Annotated[int, typer.Option("--count", "-n", help="Number of files to show")] = 20,
-    folder: Annotated[Optional[str], typer.Option("--folder", "-f", help="Folder ID")] = None,
+    folder: Annotated[str | None, typer.Option("--folder", "-f", help="Folder ID")] = None,
 ) -> None:
     """List files in Google Drive."""
     from google_cl.services.drive import DriveService
@@ -394,8 +394,8 @@ def drive_search(
 @drive_app.command("upload")
 def drive_upload(
     file_path: Annotated[Path, typer.Argument(help="Local file path to upload")],
-    name: Annotated[Optional[str], typer.Option("--name", "-n", help="Name in Drive")] = None,
-    folder: Annotated[Optional[str], typer.Option("--folder", "-f", help="Folder ID")] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Name in Drive")] = None,
+    folder: Annotated[str | None, typer.Option("--folder", "-f", help="Folder ID")] = None,
 ) -> None:
     """Upload a file to Google Drive."""
     from google_cl.services.drive import DriveService
@@ -449,7 +449,7 @@ def drive_download(
 @drive_app.command("mkdir")
 def drive_mkdir(
     name: Annotated[str, typer.Argument(help="Folder name")],
-    parent: Annotated[Optional[str], typer.Option("--parent", "-p", help="Parent folder ID")] = None,
+    parent: Annotated[str | None, typer.Option("--parent", "-p", help="Parent folder ID")] = None,
 ) -> None:
     """Create a folder in Google Drive."""
     from google_cl.services.drive import DriveService
@@ -620,7 +620,7 @@ def calendar_upcoming(
 def calendar_add(
     title: Annotated[str, typer.Argument(help="Event title")],
     start: Annotated[str, typer.Option("--start", "-s", help="Start time (YYYY-MM-DD HH:MM)")],
-    end: Annotated[Optional[str], typer.Option("--end", "-e", help="End time")] = None,
+    end: Annotated[str | None, typer.Option("--end", "-e", help="End time")] = None,
     description: Annotated[str, typer.Option("--desc", "-d", help="Description")] = "",
     location: Annotated[str, typer.Option("--location", "-l", help="Location")] = "",
     all_day: Annotated[bool, typer.Option("--all-day", help="All-day event")] = False,

@@ -65,7 +65,7 @@ class DriveFile:
     is_folder: bool
 
     @classmethod
-    def from_api_response(cls, file: dict[str, Any]) -> "DriveFile":
+    def from_api_response(cls, file: dict[str, Any]) -> DriveFile:
         """Create DriveFile from Drive API response."""
         mime_type = file.get("mimeType", "")
         return cls(
