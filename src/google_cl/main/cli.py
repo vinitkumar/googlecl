@@ -10,20 +10,20 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 from rich import print as rprint
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from google_cl.main.auth import (
-    GoogleAuth,
     DEFAULT_CREDENTIALS_FILE,
     DEFAULT_TOKEN_FILE,
     SCOPES,
+    GoogleAuth,
 )
 
 # Initialize the main CLI app
@@ -197,13 +197,13 @@ def gmail_read(
 
         # Create a styled panel for the email
         content = Text()
-        content.append(f"From: ", style="bold cyan")
+        content.append("From: ", style="bold cyan")
         content.append(f"{email.sender}\n")
-        content.append(f"To: ", style="bold cyan")
+        content.append("To: ", style="bold cyan")
         content.append(f"{email.to}\n")
-        content.append(f"Date: ", style="bold cyan")
+        content.append("Date: ", style="bold cyan")
         content.append(f"{email.date}\n")
-        content.append(f"Subject: ", style="bold cyan")
+        content.append("Subject: ", style="bold cyan")
         content.append(f"{email.subject}\n\n")
         content.append(email.body or email.snippet)
 
@@ -230,7 +230,7 @@ def gmail_send(
         gmail = GmailService(auth.credentials)
 
         result = gmail.send_message(to=to, subject=subject, body=body, html=html)
-        rprint(f"[green]✓ Email sent successfully![/green]")
+        rprint("[green]✓ Email sent successfully![/green]")
         rprint(f"  Message ID: {result.get('id')}")
 
     except Exception as e:
@@ -405,7 +405,7 @@ def drive_upload(
         drive = DriveService(auth.credentials)
 
         result = drive.upload_file(file_path=file_path, name=name, folder_id=folder)
-        rprint(f"[green]✓ File uploaded successfully![/green]")
+        rprint("[green]✓ File uploaded successfully![/green]")
         rprint(f"  Name: {result.name}")
         rprint(f"  ID: {result.id}")
         if result.web_view_link:
@@ -459,7 +459,7 @@ def drive_mkdir(
         drive = DriveService(auth.credentials)
 
         result = drive.create_folder(name=name, parent_id=parent)
-        rprint(f"[green]✓ Folder created![/green]")
+        rprint("[green]✓ Folder created![/green]")
         rprint(f"  Name: {result.name}")
         rprint(f"  ID: {result.id}")
 
@@ -482,9 +482,9 @@ def drive_delete(
 
         drive.delete_file(file_id=file_id, permanent=permanent)
         if permanent:
-            rprint(f"[green]✓ File permanently deleted[/green]")
+            rprint("[green]✓ File permanently deleted[/green]")
         else:
-            rprint(f"[green]✓ File moved to trash[/green]")
+            rprint("[green]✓ File moved to trash[/green]")
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
@@ -556,10 +556,7 @@ def calendar_today() -> None:
             else:
                 # Parse and format time
                 start_str = str(event.start)
-                if "T" in start_str:
-                    time_str = start_str.split("T")[1][:5]
-                else:
-                    time_str = start_str
+                time_str = start_str.split("T")[1][:5] if "T" in start_str else start_str
 
             table.add_row(time_str, event.summary[:40], event.location[:30])
 
@@ -657,7 +654,7 @@ def calendar_add(
             all_day=all_day,
         )
 
-        rprint(f"[green]✓ Event created![/green]")
+        rprint("[green]✓ Event created![/green]")
         rprint(f"  Title: {event.summary}")
         rprint(f"  ID: {event.id}")
         if event.html_link:
@@ -681,7 +678,7 @@ def calendar_quick(
 
         event = calendar.quick_add(text)
 
-        rprint(f"[green]✓ Event created![/green]")
+        rprint("[green]✓ Event created![/green]")
         rprint(f"  Title: {event.summary}")
         rprint(f"  Start: {event.start}")
         if event.html_link:
@@ -704,7 +701,7 @@ def calendar_delete(
         calendar = CalendarService(auth.credentials)
 
         calendar.delete_event(event_id)
-        rprint(f"[green]✓ Event deleted[/green]")
+        rprint("[green]✓ Event deleted[/green]")
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
@@ -754,9 +751,9 @@ def version() -> None:
 @app.command()
 def status() -> None:
     """Show status of all services."""
-    from google_cl.services.gmail import GmailService
-    from google_cl.services.drive import DriveService
     from google_cl.services.calendar import CalendarService
+    from google_cl.services.drive import DriveService
+    from google_cl.services.gmail import GmailService
 
     auth = GoogleAuth()
 

@@ -73,10 +73,7 @@ class Event:
 
         # Handle end time
         end_data = event.get("end", {})
-        if "dateTime" in end_data:
-            end = end_data["dateTime"]
-        else:
-            end = end_data.get("date", "")
+        end = end_data["dateTime"] if "dateTime" in end_data else end_data.get("date", "")
 
         creator = event.get("creator", {})
 

@@ -1,12 +1,12 @@
 """Tests for GoogleCL package."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from typer.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
-from google_cl.main.cli import app
 from google_cl import __version__
-
+from google_cl.main.cli import app
 
 runner = CliRunner()
 
@@ -75,7 +75,7 @@ class TestAuthModule:
         assert "sheets" in SCOPES
 
         # Each service should have at least one scope
-        for service, scopes in SCOPES.items():
+        for _service, scopes in SCOPES.items():
             assert len(scopes) > 0
             assert all(s.startswith("https://www.googleapis.com/auth/") for s in scopes)
 
@@ -96,12 +96,12 @@ class TestExceptions:
     def test_exception_hierarchy(self):
         """Test exception inheritance."""
         from google_cl.exceptions import (
-            GoogleCLException,
-            ExecutionError,
-            EarlyQuit,
             AuthenticationError,
-            ServiceError,
             ConfigurationError,
+            EarlyQuit,
+            ExecutionError,
+            GoogleCLException,
+            ServiceError,
         )
 
         assert issubclass(ExecutionError, GoogleCLException)
