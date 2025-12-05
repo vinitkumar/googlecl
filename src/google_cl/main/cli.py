@@ -84,10 +84,10 @@ def auth_login(
         rprint("[green]✓ Successfully authenticated![/green]")
     except FileNotFoundError as e:
         rprint(f"[red]✗ {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:
         rprint(f"[red]✗ Authentication failed: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @auth_app.command("logout")
@@ -179,7 +179,7 @@ def gmail_inbox(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @gmail_app.command("read")
@@ -212,7 +212,7 @@ def gmail_read(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @gmail_app.command("send")
@@ -235,7 +235,7 @@ def gmail_send(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @gmail_app.command("search")
@@ -271,7 +271,7 @@ def gmail_search(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @gmail_app.command("labels")
@@ -303,7 +303,7 @@ def gmail_labels() -> None:
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 # ============================================================================
@@ -353,7 +353,7 @@ def drive_list(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("search")
@@ -388,7 +388,7 @@ def drive_search(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("upload")
@@ -413,10 +413,10 @@ def drive_upload(
 
     except FileNotFoundError:
         rprint(f"[red]Error: File not found: {file_path}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("download")
@@ -443,7 +443,7 @@ def drive_download(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("mkdir")
@@ -465,7 +465,7 @@ def drive_mkdir(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("delete")
@@ -488,7 +488,7 @@ def drive_delete(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @drive_app.command("quota")
@@ -522,7 +522,7 @@ def drive_quota() -> None:
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 # ============================================================================
@@ -564,7 +564,7 @@ def calendar_today() -> None:
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @calendar_app.command("upcoming")
@@ -610,7 +610,7 @@ def calendar_upcoming(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @calendar_app.command("add")
@@ -634,7 +634,7 @@ def calendar_add(
             start_dt = datetime.fromisoformat(start.replace(" ", "T"))
         except ValueError:
             rprint("[red]Invalid start time format. Use: YYYY-MM-DD HH:MM[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         # Parse end time if provided
         end_dt = None
@@ -643,7 +643,7 @@ def calendar_add(
                 end_dt = datetime.fromisoformat(end.replace(" ", "T"))
             except ValueError:
                 rprint("[red]Invalid end time format. Use: YYYY-MM-DD HH:MM[/red]")
-                raise typer.Exit(1)
+                raise typer.Exit(1) from None
 
         event = calendar.create_event(
             summary=title,
@@ -662,7 +662,7 @@ def calendar_add(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @calendar_app.command("quick")
@@ -686,7 +686,7 @@ def calendar_quick(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @calendar_app.command("delete")
@@ -705,7 +705,7 @@ def calendar_delete(
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @calendar_app.command("calendars")
@@ -733,7 +733,7 @@ def calendar_list() -> None:
 
     except Exception as e:
         rprint(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 # ============================================================================
