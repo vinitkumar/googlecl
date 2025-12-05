@@ -1,39 +1,69 @@
 name: Python package
 
-on: [push]
+on:
+  push:
+    branches: [master, main, revival-poc]
+  pull_request:
+    branches: [master, main]
 
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --dev
+      - name: Lint with ruff
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, pypy-3.8, 3.10.0, '3.11.0-alpha.3']
-        os: [
-          ubuntu-latest,
-          macOS-latest,
-          windows-latest,
-        ]
+        python-version: ['3.12', '3.13', '3.14']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        exclude:
+          # Python 3.14 is in development, exclude on Windows for now
+          - os: windows-latest
+            python-version: '3.14'
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest
-        pip install -r requirements_dev.txt
-        python setup.py install
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        python setup.py test
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run tests
+        run: uv run pytest tests/ -v
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --dev
+      - name: Type check with mypy
+        run: uv run mypy src --ignore-missing-imports
