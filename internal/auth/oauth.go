@@ -22,7 +22,10 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-const loginTimeout = 5 * time.Minute
+const (
+	loginTimeout            = 5 * time.Minute
+	callbackShutdownTimeout = time.Second
+)
 
 // LoginOptions identifies a named local profile, not a verified Google identity.
 type LoginOptions struct {
@@ -158,7 +161,14 @@ func Login(ctx context.Context, opts LoginOptions, out io.Writer) error {
 		fmt.Fprintln(w, "Authorization received. Return to your terminal.")
 	})
 	server := &http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
-	defer server.Close()
+	defer func() {
+		// Let the callback response finish, even after denial or cancellation.
+		shutdown, stop := context.WithTimeout(context.Background(), callbackShutdownTimeout)
+		defer stop()
+		if err := server.Shutdown(shutdown); err != nil {
+			_ = server.Close()
+		}
+	}()
 	serverErrors := make(chan error, 1)
 	go func() { serverErrors <- server.Serve(listener) }()
 	options := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier), oauth2.SetAuthURLParam("prompt", "consent")}

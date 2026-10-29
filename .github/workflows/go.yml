@@ -37,6 +37,8 @@ jobs:
         run: test -z "$(gofmt -l cmd internal)"
       - run: go vet ./...
       - run: go test -race -coverpkg=./internal/... -coverprofile=coverage.out ./...
+      - name: Stress OAuth callback shutdown
+        run: go test -race ./internal/auth -run '^TestLogin(CallbackResponse|Termination)$' -count=100
       - run: go build -trimpath -o build/google${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/google
       - name: Alternative executable
         shell: bash
