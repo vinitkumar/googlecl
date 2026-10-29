@@ -1,11 +1,34 @@
-build/
-GoogleCL.egg-info/
-dist/
-google_cl.egg-info/
-.idea
-*.pyc
-src/google
-.eggs/
-.mypy_cache/
+# Go build and verification output.
+/build/
+/dist/
+/google
+/googlecl
+/google.exe
+/googlecl.exe
+/coverage.out
+/coverage.html
+*.test
+*.test.exe
+
+# Local OAuth configuration and token stores. Never commit real credentials.
+.env
+.env.*
+credentials*.json
+client_secret*.json
 client_secrent.json
+/tokens/
+/.googlecl/
+*.client.json
+.token-*
+token*.json
+
+# Historical Python caches may remain in an existing checkout.
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.idea/
 .DS_Store

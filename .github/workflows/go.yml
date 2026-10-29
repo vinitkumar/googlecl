@@ -1,0 +1,94 @@
+name: Go
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  GOTOOLCHAIN: go1.27.3
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache: true
+      - name: Verify toolchain and dependencies
+        shell: bash
+        run: |
+          test "$(go env GOVERSION)" = go1.27.3
+          go mod tidy -diff
+          go mod verify
+      - name: Check formatting
+        shell: bash
+        run: test -z "$(gofmt -l cmd internal)"
+      - run: go vet ./...
+      - run: go test -race -coverpkg=./internal/... -coverprofile=coverage.out ./...
+      - run: go build -trimpath -o build/google${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/google
+      - name: Alternative executable
+        shell: bash
+        run: cp build/google${{ runner.os == 'Windows' && '.exe' || '' }} build/googlecl${{ runner.os == 'Windows' && '.exe' || '' }}
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          ./build/google${{ runner.os == 'Windows' && '.exe' || '' }} --version
+          ./build/google${{ runner.os == 'Windows' && '.exe' || '' }} docs help
+          ./build/googlecl${{ runner.os == 'Windows' && '.exe' || '' }} --version
+          ./build/googlecl${{ runner.os == 'Windows' && '.exe' || '' }} contacts help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}
+          path: coverage.out
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+  packages:
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+      - run: go env GOVERSION
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2.13.3
+          args: check
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2.13.3
+          args: release --snapshot --clean
+      - name: Install package inspection tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Verify archives and packages
+        run: bash scripts/verify-artifacts.sh dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-packages
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+            dist/*.rpm
+            dist/checksums.txt

@@ -1,0 +1,49 @@
+name: Draft release
+
+on:
+  push:
+    tags: ['v1.*']
+
+env:
+  GOTOOLCHAIN: go1.27.3
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/go.yml
+  release:
+    needs: verify
+    environment: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+      - name: Require reviewed live smoke evidence
+        env:
+          SMOKE_SHA: ${{ vars.ALPHA_SMOKE_SHA }}
+        run: |
+          test "$SMOKE_SHA" = "$GITHUB_SHA" || { echo 'Record passing live/OS smoke tests for this commit before releasing'; exit 1; }
+          test "$(go env GOVERSION)" = go1.27.3
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2.13.3
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+            dist/*.rpm

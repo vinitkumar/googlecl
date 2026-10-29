@@ -1,88 +1,57 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+GO_VERSION := 1.27.3
+export GOTOOLCHAIN := go$(GO_VERSION)
+GO ?= go
+GORELEASER ?= goreleaser
+GOFMT = "$(shell $(GO) env GOROOT)/bin/gofmt"
+EXE := $(if $(filter Windows_NT,$(OS)),.exe,)
 .DEFAULT_GOAL := help
-
-define BROWSER_PYSCRIPT
-import os, webbrowser, sys
-
-try:
-	from urllib import pathname2url
-except:
-	from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
-endef
-export BROWSER_PYSCRIPT
-
-define PRINT_HELP_PYSCRIPT
-import re, sys
-
-for line in sys.stdin:
-	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
-	if match:
-		target, help = match.groups()
-		print("%-20s %s" % (target, help))
-endef
-export PRINT_HELP_PYSCRIPT
-
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+.PHONY: help toolchain build fmt tidy test race coverage vet security verify snapshot clean
 
 help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@echo 'Targets: build fmt tidy test race coverage vet security verify snapshot clean'
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+toolchain:
+	@test "$$($(GO) env GOVERSION)" = 'go$(GO_VERSION)' || (echo 'Go $(GO_VERSION) is required'; exit 1)
 
-clean-build: ## remove build artifacts
-	rm -fr build/
-	rm -fr dist/
-	rm -fr .eggs/
-	find . -name '*.egg-info' -exec rm -fr {} +
-	find . -name '*.egg' -exec rm -f {} +
+build: toolchain
+	$(GO) build -trimpath -o build/google$(EXE) ./cmd/google
+	cp build/google$(EXE) build/googlecl$(EXE)
 
-clean-pyc: ## remove Python file artifacts
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -fr {} +
+fmt: toolchain
+	$(GOFMT) -w cmd internal
 
-clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
-	rm -fr .pytest_cache
+tidy: toolchain
+	$(GO) mod tidy
+	$(GO) mod verify
 
-lint: ## check style with flake8
-	flake8 google_cl tests
+test: toolchain
+	$(GO) test ./...
 
-test: ## run tests quickly with the default Python
-	py.test
+race: toolchain
+	$(GO) test -race ./...
 
-test-all: ## run tests on every Python version with tox
-	tox
+coverage: toolchain
+	$(GO) test -race -coverpkg=./internal/... -coverprofile=coverage.out ./...
+	$(GO) tool cover -func=coverage.out
 
-coverage: ## check code coverage quickly with the default Python
-	coverage run --source google_cl -m pytest
-	coverage report -m
-	coverage html
-	$(BROWSER) htmlcov/index.html
+vet: toolchain
+	$(GO) vet ./...
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/google_cl.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ google_cl
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	$(BROWSER) docs/_build/html/index.html
+security: toolchain
+	$(GO) run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+verify: toolchain
+	@test -z "$$( $(GOFMT) -l cmd internal)"
+	$(GO) mod tidy -diff
+	$(GO) mod verify
+	$(GO) vet ./...
+	$(GO) test -race -coverpkg=./internal/... -coverprofile=coverage.out ./...
+	$(GO) run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-release: dist ## package and upload a release
-	twine upload dist/*
+snapshot: toolchain
+	$(GORELEASER) check
+	$(GORELEASER) release --snapshot --clean
 
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
-
-install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+clean:
+	rm -rf build dist
+	rm -f coverage.out coverage.html

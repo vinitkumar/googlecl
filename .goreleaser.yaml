@@ -1,0 +1,65 @@
+version: 2
+project_name: googlecl
+env:
+  - GOTOOLCHAIN=go1.27.3
+
+builds:
+  - id: google
+    main: ./cmd/google
+    binary: google
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+  - id: googlecl
+    main: ./cmd/google
+    binary: googlecl
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - ids: [google, googlecl]
+    formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - docs/compatibility.md
+      - docs/authentication.md
+      - docs/releasing.md
+
+nfpms:
+  - ids: [google, googlecl]
+    package_name: googlecl
+    homepage: https://github.com/vinitkumar/googlecl
+    maintainer: Vinit Kumar <mail@vinitkumar.me>
+    description: Command-line access to Google Drive, Calendar, and Contacts
+    license: Apache-2.0
+    formats: [deb, rpm]
+    bindir: /usr/bin
+
+checksum:
+  name_template: checksums.txt
+snapshot:
+  version_template: '1.0.0-alpha.1-dev'
+changelog:
+  use: git
+  sort: asc
+release:
+  github:
+    owner: vinitkumar
+    name: googlecl
+  draft: true
+  prerelease: auto
+  header: |
+    Go alpha: legacy GoogleCL syntax for supported Docs, Calendar, and Contacts commands.
+    Read the compatibility and OAuth setup guides before replacing an existing installation.
